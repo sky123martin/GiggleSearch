@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+
+    <h3>Search</h3>
+
+    <div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(searchForm)}}
+        </div>
+    </div>
+
+    <h3>Filter Results</h3>
+    <div class="row">
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+    <pre><code>{{data}}</code></pre>
+    <!-- <pre><code>{{data1}}</code></pre> -->
+    <h3>Overlapping Regions Found: {{region}} {{lowerBound}}:{{upperBound}} from {{source}}</h3>
+        
+    <table class="table table-hover">
+            <tr>
+              <th>File Name</th>
+              <th>Overlap</th> 
+              <th>Total Regions</th>
+              <th>Percent of Region Overlaped</th> 
+            </tr>
+            
+            <tr>
+             <th  colspan="4"> <H5>Description</H5><P>This track shows the location of the consensus and exemplar sequences used for the selection of probes on the Affymetrix HG-U133 Plus 2.0 chip.</P><H5>Methods</H5><P>Consensus and exemplar sequences were downloaded from the<A HREF="http://www.affymetrix.com/support/technical/byproduct.affx?product=hg-u133-plus" \nTARGET=_blank>Affymetrix Product Support</A>and mapped to the genome using blat followed by pslReps with the parameters: <PRE><TT>   -minCover=0.3 -minAli=0.95 -nearTop=0.005\n</TT></PRE></P><H3>Credits</H5>Thanks to <A href="https://www.thermofisher.com/us/en/home/life-science/microarray-analysis/affymetrix.html"\ntarget="_blank">Affymetrix</A> for the data underlying this track.</P>
+              </th>
+            </tr>
+            {% for value in results%}
+            <tr>
+              <td> {{ value[0] }} </td>
+              <td> {{ value[2] }} </td>
+              <td> {{ value[1] }} </td>
+              <td> {{ value[3] }} %</td>
+            </tr>
+            {% endfor %}
+
+          </table>
+{% endblock %}
