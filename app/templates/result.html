@@ -3,54 +3,85 @@
 
 {% block app_content %}
 
-    <h3>Search</h3>
-
-    <div class="row">
-        <div class="col-md-4">
-            {{ wtf.quick_form(searchForm)}}
-        </div>
-    </div>
-
-    <h3>Filter Results</h3>
-    <div class="row">
-        <div class="col-md-4">
-            {{ wtf.quick_form(form) }}
-        </div>
-    </div>
 
     <h3>Overlapping Regions Found: {{region}} {{lowerBound}}:{{upperBound}} from {{source}}</h3>
-        
+    <h4><a href="#" data-toggle="modal" data-target='#search' ><i class="fa fa-edit"></i> Search </a></h4>
+    <div class="modal fade" id="search" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h2 class="modal-title"><font color="#7FCD79">Search</font></h2>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ wtf.quick_form(searchForm)}}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script> $('#search').modal(show); </script>
+
+    <h4><a href="#" data-toggle="modal" data-target='#filter' ><i class="fa fa-edit"></i> Filter Results </a></h4>
+      <div class="modal fade" id="filter" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h2 class="modal-title"><font color="#7FCD79">Search</font></h2>
+              </div>
+              <div class="modal-body">
+                  <div class="row">
+                      <div class="col-md-4">
+                          {{ wtf.quick_form(form) }}
+                      </div>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <script> $('#filter').modal(show); </script>
+
     <table class="table table-hover">
             <tbody>
             {% for value in results%}
                 <tr>
                   <td>
-                    <h3><a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> {{ value[0] }} </a></h3>
+                    <h4><a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> {{ value[0] }} </a></h4>
                     <h5><font color="#7fcdbb"> Overlap: {{ value[2] }}  -  Region Size: {{ value[1] }}  -  Percentage of Overlap: {{ value[3] }}% </font></h5>
                   </td>
                 </tr>
-                
-                <div class="modal fade" id="descriptionModal{{ value[1] }}{{ value[2] }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h2 class="modal-title"><font color="#7FCD79">{{ value[0] }}</font></h2>
-                      </div>
-                      <div class="modal-body">
-                        <p> 
-                            {{ value[4] | safe}}
-                        </p>
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <script> $('#descriptionModal{{ value[1] }}{{ value[2] }}').modal(show); </script>
 
             {% endfor %}
           </tbody>
           </table>
+          {% for value in results%}
+          <div class="modal fade" id="descriptionModal{{ value[1] }}{{ value[2] }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h2 class="modal-title"><font color="#7FCD79">{{ value[0] }}</font></h2>
+                  </div>
+                  <div class="modal-body">
+                        {{ value[4] | safe}}
+
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <script> $('#descriptionModal{{ value[1] }}{{ value[2] }}').modal(show); </script>
+            {% endfor %}
 {% endblock %}

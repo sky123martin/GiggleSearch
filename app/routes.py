@@ -44,7 +44,7 @@ def result(source, region, lowerBound, upperBound, sortby = None):
     form = FilterResultsForm()
     if form.validate_on_submit():
         results = sorted(results,reverse = not form.Ascending.data, key=lambda result: result[int(form.sortBy.data)]) 
-        return render_template('result.html', form=form, results = results, source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
+        return render_template('result.html', searchForm=searchForm, form=form, results = results, source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
 
     return render_template('result.html', searchForm=searchForm, form=form, results = results, source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
 
