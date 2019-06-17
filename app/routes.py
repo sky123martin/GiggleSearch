@@ -28,20 +28,13 @@ def search():
 @app.route("/result/<source>/<sortby>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
 def result(source, region, lowerBound, upperBound, sortby = None):
     
-    results = getStixData('https://stix.colorado.edu/{}?region={}:{}-{}'.format(source, region, lowerBound, upperBound))
+    overlap = getStixData(source, region, lowerBound, upperBound)
+
     conn = mysql.connect()
     cursor = conn.cursor()
-
-    cursor.execute("SELECT tableName, shortLabel, longLabel, url, html from hg19.trackDb where tableName = 'affyU133Plus2'")
-    data = cursor.fetchone()
-
-    # cursor.execute("SELECT tableName, shortLabel, longLabel, url, html from hg19.trackDb where tableName = 'agilentCgh1x1m'")
-    # result[0] = cursor.fetchone()
+    results = getUCSCData(overlap, conn, cursor)
     
-    
-    
-    
-    if sortby!=None:
+    if sortby != None:
         results = sorted(results,reverse=True, key=lambda result: result[int(sortby)]) 
 
     searchForm = SearchForm()
@@ -53,35 +46,49 @@ def result(source, region, lowerBound, upperBound, sortby = None):
         results = sorted(results,reverse = not form.Ascending.data, key=lambda result: result[int(form.sortBy.data)]) 
         return render_template('result.html', form=form, results = results, source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
 
-# , data=data, data1=data1
-    return render_template('result.html', data=data, searchForm=searchForm, form=form, results = results, source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
+    return render_template('result.html', searchForm=searchForm, form=form, results = results, source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
 
-def getStixData(url):
+def getStixData(source, region, lowerBound, upperBound):
+    url = 'https://stix.colorado.edu/{}?region={}:{}-{}'.format(source, region, lowerBound, upperBound)
     request = requests.get(url)
     soup = bs(request.text,"lxml")
     text = soup.text.split('\n') 
     results = []
-    # conn = mysql.connect()
-    # cursor = conn.cursor()
 
     for i in range(0,len(text)-1):
         temp = text[i].split("\t")
         split = temp[0].split("/")
-
-        # cursor.execute("SELECT shortLabel, longLabel, html from hg19.trackDb where tableName = '{}'".format(temp[0]))
-        # data = cursor.fetchone()
-        # temp[0] = data #data[0]+ " - " +data[1]
-
         temp[1] = int(temp[1])
         temp[2] = int(temp[2])
-        if len(split) == 2 :
-            temp[0] = split[1]
-
-        temp[0] = temp[0].split(".bed.gz")[0]
-        temp.append(round(((temp[2]/temp[1])*100.0),10))
-
         if temp[2] > 0:
+            if len(split) == 2 :
+                temp[0] = split[1]
+
+            temp[0] = temp[0].split(".bed.gz")[0]
+            temp.append(round(((temp[2]/temp[1])*100.0),10))
             results.append(temp)
+        if len(results)>50: #FIXME: TO LIMIT LOADING TIME, SEPERATE INDIVIDUAL PAGES 0-10 then 10-20 ect 
+            break
+    return results
+
+def getUCSCData(results, conn, cursor):
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    for temp in results:
+        query = "SELECT shortLabel, longLabel, html from hg19.trackDb where tableName = '{}'".format(temp[0])
+        cursor.execute(query)
+        data = cursor.fetchone()
+        if data != None:
+            temp[0] = data[0] + ":  " + data[1]
+            temp.append(data[2])
+        else:
+            temp.append("No extra info")
     return results
 
 def cleanHTML(html):
+    #FIXME extract description for main page for mini view in main page
+    #below is fix that didn't work to display html
+    html = html.replace("&", " &amp; ")
+    html = html.replace("<", " &lt; ")
+    html = html.replace(">", " &gt; ")
+    return html

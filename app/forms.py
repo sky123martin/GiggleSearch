@@ -6,7 +6,7 @@ class SearchForm(FlaskForm):
     lowerBound = IntegerField('Lower Bound', validators=[DataRequired()])
     upperBound = IntegerField('Upper Bound', validators=[DataRequired()])
     region = StringField ('Region', validators=[DataRequired()])
-    dataSource = SelectField(u'Data Source', choices=[('rme','RME'), ('ucsc','UCSC')])
+    dataSource = SelectField(u'Data Source', choices=[('ucsc','UCSC')])
     submit = SubmitField('Search')
 
 class FilterResultsForm(FlaskForm):

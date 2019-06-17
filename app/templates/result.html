@@ -17,8 +17,7 @@
             {{ wtf.quick_form(form) }}
         </div>
     </div>
-    <pre><code>{{data}}</code></pre>
-    <!-- <pre><code>{{data1}}</code></pre> -->
+
     <h3>Overlapping Regions Found: {{region}} {{lowerBound}}:{{upperBound}} from {{source}}</h3>
         
     <table class="table table-hover">
@@ -28,19 +27,36 @@
               <th>Total Regions</th>
               <th>Percent of Region Overlaped</th> 
             </tr>
-            
-            <tr>
-             <th  colspan="4"> <H5>Description</H5><P>This track shows the location of the consensus and exemplar sequences used for the selection of probes on the Affymetrix HG-U133 Plus 2.0 chip.</P><H5>Methods</H5><P>Consensus and exemplar sequences were downloaded from the<A HREF="http://www.affymetrix.com/support/technical/byproduct.affx?product=hg-u133-plus" \nTARGET=_blank>Affymetrix Product Support</A>and mapped to the genome using blat followed by pslReps with the parameters: <PRE><TT>   -minCover=0.3 -minAli=0.95 -nearTop=0.005\n</TT></PRE></P><H3>Credits</H5>Thanks to <A href="https://www.thermofisher.com/us/en/home/life-science/microarray-analysis/affymetrix.html"\ntarget="_blank">Affymetrix</A> for the data underlying this track.</P>
-              </th>
-            </tr>
+            <tbody>
             {% for value in results%}
-            <tr>
-              <td> {{ value[0] }} </td>
-              <td> {{ value[2] }} </td>
-              <td> {{ value[1] }} </td>
-              <td> {{ value[3] }} %</td>
-            </tr>
-            {% endfor %}
+                <tr>
+                  <td><a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' class="btn btn-success"><i class="fa fa-edit"></i> {{ value[0] }} </a></td>
+                  <td> {{ value[2] }} </td>
+                  <td> {{ value[1] }} </td>
+                  <td> {{ value[3] }} %</td>
+                </tr>
 
+                <div class="modal fade" id="descriptionModal{{ value[1] }}{{ value[2] }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">{{ value[0] }}</h4>
+                      </div>
+                      <div class="modal-body">
+                        <p> 
+                            {{ value[4] | safe}}
+                        </p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <script> $('#descriptionModal{{ value[1] }}{{ value[2] }}').modal(show); </script>
+
+            {% endfor %}
+          </tbody>
           </table>
 {% endblock %}
