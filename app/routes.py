@@ -4,6 +4,7 @@ from app.forms import SearchForm, FilterResultsForm
 from bs4 import BeautifulSoup as bs
 from flaskext.mysql import MySQL
 import requests
+import re
 
 mysql = MySQL()
 app.config['MYSQL_DATABASE_USER'] = 'genome'
@@ -44,9 +45,9 @@ def result(source, region, lowerBound, upperBound, sortby = None):
     form = FilterResultsForm()
     if form.validate_on_submit():
         results = sorted(results,reverse = not form.Ascending.data, key=lambda result: result[int(form.sortBy.data)]) 
-        return render_template('result.html', searchForm=searchForm, form=form, results = results, source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
+        return render_template('result.html', searchForm=searchForm, form=form, results = results, numresults = len(results), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
 
-    return render_template('result.html', searchForm=searchForm, form=form, results = results, source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
+    return render_template('result.html', searchForm=searchForm, form=form, results = results, numresults = len(results), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
 
 def getStixData(source, region, lowerBound, upperBound):
     url = 'https://stix.colorado.edu/{}?region={}:{}-{}'.format(source, region, lowerBound, upperBound)
@@ -67,8 +68,8 @@ def getStixData(source, region, lowerBound, upperBound):
             temp[0] = temp[0].split(".bed.gz")[0]
             temp.append(round(((temp[2]/temp[1])*100.0),10))
             results.append(temp)
-        if len(results)>50: #FIXME: TO LIMIT LOADING TIME, SEPERATE INDIVIDUAL PAGES 0-10 then 10-20 ect 
-            break
+        # if len(results)>50: #FIXME: TO LIMIT LOADING TIME, SEPERATE INDIVIDUAL PAGES 0-10 then 10-20 ect 
+        #     break
     return results
 
 def getUCSCData(results, conn, cursor):
@@ -80,15 +81,26 @@ def getUCSCData(results, conn, cursor):
         data = cursor.fetchone()
         if data != None:
             temp[0] = data[0] + ":  " + data[1]
-            temp.append(data[2])
+            if data[2] == "":
+               temp.append("No further information on dataset found.") 
+            else:
+                temp.append(data[2])
+                temp.append(cleanHTML(data[2]))
         else:
-            temp.append("No extra info")
+            temp.append("No further information on dataset found.")
     return results
 
 def cleanHTML(html):
-    #FIXME extract description for main page for mini view in main page
-    #below is fix that didn't work to display html
-    html = html.replace("&", " &amp; ")
-    html = html.replace("<", " &lt; ")
-    html = html.replace(">", " &gt; ")
-    return html
+    # Format of descriptions <H3>Description</H3> <P> ... <P> <h2>Description</h2> <p>
+    if "Description" in html:
+        # print(html)
+        result = re.search('^[ \t]*<[hH]{1}[0-9]{1}>[ \t]*Description[ \t]*<\/[hH]{1}[0-9]{1}>(.*?)<[pP]{1}>[ \t]*(.*?)<\/[pP]{1}>', html, flags = re.DOTALL)
+        if result != None:
+            htmldescr = result.group(0)
+            index = htmldescr.find("<P>")
+            if index == -1:
+                index = htmldescr.find("<p>")
+            cleanedhtml = htmldescr[index:len(htmldescr)]
+            return cleanedhtml
+    return ""
+    
