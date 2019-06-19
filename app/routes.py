@@ -1,8 +1,10 @@
+from __future__ import print_function
 from flask import Flask, render_template, flash, redirect
 from app import app
 from app.forms import SearchForm, FilterResultsForm
 from bs4 import BeautifulSoup as bs
 from flaskext.mysql import MySQL
+import time
 import requests
 import re
 
@@ -26,28 +28,46 @@ def search():
     return render_template('search.html', title='Region of Interest:', form=form)
 
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
-@app.route("/result/<source>/<sortby>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
 def result(source, region, lowerBound, upperBound, sortby = None):
-    
-    overlap = getStixData(source, region, lowerBound, upperBound)
-
-    conn = mysql.connect()
-    cursor = conn.cursor()
-    results = getUCSCData(overlap, conn, cursor)
-    
-    if sortby != None:
-        results = sorted(results,reverse=True, key=lambda result: result[int(sortby)]) 
-
+    # Definition of forms:
+    filterForm = FilterResultsForm()
     searchForm = SearchForm()
+    print("#")
     if searchForm.validate_on_submit():
+        print("REDIRECTING SEARCH")
         return redirect("/result/{}/{}:{}-{}".format(searchForm.dataSource.data, searchForm.region.data, searchForm.lowerBound.data, searchForm.upperBound.data))
 
-    form = FilterResultsForm()
-    if form.validate_on_submit():
-        results = sorted(results,reverse = not form.Ascending.data, key=lambda result: result[int(form.sortBy.data)]) 
-        return render_template('result.html', searchForm=searchForm, form=form, results = results, numresults = len(results), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
+    print("INITIATING SEARCH")
+    start_total = time.time()
 
-    return render_template('result.html', searchForm=searchForm, form=form, results = results, numresults = len(results), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
+    start_task = time.time()
+    overlap = getStixData(source, region, lowerBound, upperBound)
+    end_task = time.time()
+    print("####")
+    print("OVERLAPPING REGIONS FOUND AND RESULTS PARSED ({} seconds)".format(end_task - start_task))
+
+    if filterForm.validate_on_submit():
+        start_task = time.time()
+        overlap = sorted(overlap,reverse = not filterForm.Ascending.data, key=lambda result: overlap[int(filterForm.sortBy.data)]) 
+        end_task = time.time()
+        print("#####")
+        print("FILTERING FOR SPECIFIED CONSTRAINTS ({} seconds)".format(end_task - start_task))
+
+    currentpage = overlap[0:10]
+
+    start_task = time.time()
+    currentpage = getDataInfo(currentpage, source) #generic function to handle data information gathering
+    end_task = time.time()
+    print("########")
+    print("DATA SOURCE INFOMATION COLLECTED ({} seconds)".format(end_task - start_task))
+
+    end_total = time.time()
+    print("##########")
+    print("TOTAL SEARCH TIME ELAPSED {}".format(end_total - start_total))
+    print("####################")
+    print("RENDERING")
+    print("########################################")
+    return render_template('result.html', searchForm=searchForm, form = filterForm, results = currentpage, searchtime = end_total - start_total, numresults = len(overlap), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
 
 def getStixData(source, region, lowerBound, upperBound):
     url = 'https://stix.colorado.edu/{}?region={}:{}-{}'.format(source, region, lowerBound, upperBound)
@@ -68,11 +88,15 @@ def getStixData(source, region, lowerBound, upperBound):
             temp[0] = temp[0].split(".bed.gz")[0]
             temp.append(round(((temp[2]/temp[1])*100.0),10))
             results.append(temp)
-        if len(results) > 50: #FIXME: TO LIMIT LOADING TIME, SEPERATE INDIVIDUAL PAGES 0-10 then 10-20 ect 
-            break
     return results
 
-def getUCSCData(results, conn, cursor):
+def getDataInfo(data, source):
+    if source == "UCSC" or source == "ucsc":
+        return getUCSCData(data)
+    else:
+        return data
+
+def getUCSCData(results):
     conn = mysql.connect()
     cursor = conn.cursor()
     for temp in results:
@@ -85,15 +109,14 @@ def getUCSCData(results, conn, cursor):
                temp.append("No further information on dataset found.") 
             else:
                 temp.append(data[2])
-                temp.append(cleanHTML(data[2]))
+                temp.append(getUCSCdescription(data[2]))
         else:
             temp.append("No further information on dataset found.")
     return results
 
-def cleanHTML(html):
+def getUCSCdescription(html):
     # Format of descriptions <H3>Description</H3> <P> ... <P> <h2>Description</h2> <p>
     if "Description" in html:
-        # print(html)
         result = re.search('^[ \t]*<[hH]{1}[0-9]{1}>[ \t]*Description[ \t]*<\/[hH]{1}[0-9]{1}>(.*?)<[pP]{1}>[ \t]*(.*?)<\/[pP]{1}>', html, flags = re.DOTALL)
         if result != None:
             htmldescr = result.group(0)
