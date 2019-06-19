@@ -68,8 +68,8 @@ def getStixData(source, region, lowerBound, upperBound):
             temp[0] = temp[0].split(".bed.gz")[0]
             temp.append(round(((temp[2]/temp[1])*100.0),10))
             results.append(temp)
-        # if len(results)>50: #FIXME: TO LIMIT LOADING TIME, SEPERATE INDIVIDUAL PAGES 0-10 then 10-20 ect 
-        #     break
+        if len(results) > 50: #FIXME: TO LIMIT LOADING TIME, SEPERATE INDIVIDUAL PAGES 0-10 then 10-20 ect 
+            break
     return results
 
 def getUCSCData(results, conn, cursor):
@@ -100,7 +100,6 @@ def cleanHTML(html):
             index = htmldescr.find("<P>")
             if index == -1:
                 index = htmldescr.find("<p>")
-            cleanedhtml = htmldescr[index:len(htmldescr)]
-            return cleanedhtml
+            return htmldescr[index:len(htmldescr)]
     return ""
     

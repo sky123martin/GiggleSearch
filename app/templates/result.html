@@ -3,7 +3,7 @@
 
 {% block app_content %}
 
-    <h4><a href="#" data-toggle="modal" data-target='#search' ><i class="fa fa-edit"></i> Search </a></h4>
+    <h4><a href="#" data-toggle="modal" data-target='#search' class="btn btn-success"><i class="fa fa-edit"></i> Search </a></h4>
     <div class="modal fade" id="search" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
@@ -26,7 +26,7 @@
       </div>
       <script> $('#search').modal(show); </script>
 
-    <h4><a href="#" data-toggle="modal" data-target='#filter' ><i class="fa fa-edit"></i> Filter Results </a></h4>
+    <h4><a href="#" data-toggle="modal" data-target='#filter' class="btn btn-success"><i class="fa fa-edit"></i> Filter Results </a></h4>
       <div class="modal fade" id="filter" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -57,11 +57,11 @@
                   <td>
                       {% if value[4] != "No further information on dataset found." %}
                       <h4><font color="#144177">{{ value[0] }}</font> <a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> &#9432;</a></h4>
-                      <h5> {{ value[5] | safe}} </h5>
                       <h5><font color="#7fcdbb"> Overlap: {{ value[2] }}  -  Region Size: {{ value[1] }}  -  Percentage of Overlap: {{ value[3] }}% </font></h5>
+                      <h5> {{ value[5][:-5] | safe}}<a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i>...</a></h5>
                       {% else %}
-                      <h5><font color="#7fcdbb"> Overlap: {{ value[2] }}  -  Region Size: {{ value[1] }}  -  Percentage of Overlap: {{ value[3] }}% </font></h5>
                       <h4> <font color="#144177">{{ value[0] }}</font> </h4>
+                      <h5><font color="#7fcdbb"> Overlap: {{ value[2] }}  -  Region Size: {{ value[1] }}  -  Percentage of Overlap: {{ value[3] }}% </font></h5>
                       {% endif %}
                     
                   </td>
@@ -79,7 +79,7 @@
                     <h2 class="modal-title"><font color="#7FCD79">{{ value[0] }}</font></h2>
                   </div>
                   <div class="modal-body">
-                        {{ value[4]}}
+                        {{ value[4] | safe}}
 
                   </div>
                   <div class="modal-footer">
