@@ -61,7 +61,7 @@
                       {% else %}
                         <h4><font color="#144177">{{ value[0] }}</font> <a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> &#9432;</a></h4>
                         <h5><font color="#7fcdbb"> Overlap: {{ value[2] }}  -  Region Size: {{ value[1] }}  -  Percentage of Overlap: {{ value[3] }}% </font></h5>
-                        <h5> {{ value[5][:-4] | safe}}<a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> (read more)</a></p></h5>
+                        <h5> {{ value[5][:-4] | safe}}<a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> &#8690;</a></p></h5>
                       {% endif %}
                     
                   </td>
@@ -89,4 +89,89 @@
             </div>
             <script> $('#descriptionModal{{ value[1] }}{{ value[2] }}').modal(show); </script>
             {% endfor %}
+
+            <center> 
+            <h1>
+                <table style=”border: 1px solid white;”>
+                    <tr>
+                        {% if page != 1 %}
+                        <td width = 100>
+                            <a href="{{"/result/{}/{}:{}-{}/pg:{}".format(source, region, lowerBound, upperBound, page-1)}}">
+                            <table >
+                                <tr>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<</tr>
+                                <tr><h4>Previous</h4></tr>
+                            </table>
+                            </a>
+                        </td>
+                        {% endif %}
+                        <td width = 5>
+                            <table >
+                              <tr><font color="#F3FC66">Gi</font></tr>
+                              <tr><font color="white"><h5>_</h5></font></tr>
+                            </table>
+                        </td>
+                        {% if page > 6%}
+                          {% for i in range(page-5,page+5)%}
+                          {% if i != page%}
+                          <td width = 5>
+                            <a href="{{"/result/{}/{}:{}-{}/pg:{}".format(source, region, lowerBound, upperBound, i)}}">
+                            <table>
+                              <tr><font color = "#AEFF54">g</font></tr>
+                              <tr><h5>{{i}}</h5></tr>
+                            </table>
+                          </a>
+                          </td>
+                          {% else %}
+                          <td width = 5>
+                              <table>
+                                <tr><font color = "#FC6306">g</font></tr>
+                                <tr><h5>{{i}}</h5></tr>
+                              </table>
+                            </td>
+                          {% endif %}
+                          {% endfor %}
+                        {% else %}
+                          {% for i in range(1,10)%}
+                          {% if i != page%}
+                          <td width = 5>
+                            <a href="{{"/result/{}/{}:{}-{}/pg:{}".format(source, region, lowerBound, upperBound, i)}}">
+                            <table>
+                              <tr><font color = "#AEFF54">g</font></tr>
+                              <tr><h5>{{i}}</h5></tr>
+                            </table>
+                          </a>
+                          </td>
+                          {% else %}
+                          <td width = 5>
+                              <table>
+                                <tr><font color = "#FC6306">g</font></tr>
+                                <tr><h5>{{i}}</h5></tr>
+                              </table>
+                            </td>
+                          {% endif %}
+                          {% endfor %}
+                        {% endif %}
+                            <td width = 5>
+                                <table >
+                                  <tr><font color="#7fcdbb">le</font></tr>
+                                  <tr><font color="white"><h5>_</h5></font></tr>
+                                </table>
+                            </td>
+                        <td width = 30> 
+                          </td>
+                        <td> 
+                            <a href="{{"/result/{}/{}:{}-{}/pg:{}".format(source, region, lowerBound, upperBound, page+1)}}">
+                            <table>
+                                <tr>></tr>
+                                <tr><h4>Next</h4></tr>
+                            </table>
+                            </a>
+                          </td>
+                      </tr>
+                    </table>
+
+
+                  </h1>
+                </center> 
+
 {% endblock %}
