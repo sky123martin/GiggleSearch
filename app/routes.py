@@ -24,12 +24,14 @@ def index():
 def search():
     form = SearchForm()
     if form.validate_on_submit():
-        return redirect("/result/{}/{}:{}-{}?result:1-10".format(form.dataSource.data, form.region.data, form.lowerBound.data, form.upperBound.data))
+        return redirect("/result/{}/{}:{}-{}/pg:1".format(form.dataSource.data, form.region.data, form.lowerBound.data, form.upperBound.data))
     return render_template('search.html', title='Region of Interest:', form=form)
 
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>", methods=['GET', 'POST'])
-def result(source, region, lowerBound, upperBound, page=None):
+@app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>/srt:<sort>-<asc>", methods=['GET', 'POST'])
+
+def result(source, region, lowerBound, upperBound, page=None, sort = None, asc = None):
     # Definition of forms:
     filterForm = FilterResultsForm()
     searchForm = SearchForm()
@@ -38,16 +40,23 @@ def result(source, region, lowerBound, upperBound, page=None):
         print("REDIRECTING SEARCH")
         return redirect("/result/{}/{}:{}-{}".format(searchForm.dataSource.data, searchForm.region.data, searchForm.lowerBound.data, searchForm.upperBound.data))
 
+    if filterForm.validate_on_submit():
+        print("FILTERING SEARCH")
+        return redirect("/result/{}/{}:{}-{}/pg:1/srt:{}-{}".format(source, region, lowerBound, upperBound, filterForm.sortBy.data, filterForm.ascending.data))
+
     print("INITIATING SEARCH")
     start_total = time.time()
 
     overlap = getStixData(source, region, lowerBound, upperBound)
 
     start_task = time.time()
-    if filterForm.validate_on_submit():
-        overlap = sorted(overlap,reverse = not filterForm.Ascending.data, key=lambda result: overlap[int(filterForm.sortBy.data)]) 
+
+    if sort != None:
+        overlap.sort(key = lambda ele : ele[int(sort)], reverse = bool(asc))
     else:
-        overlap = sorted(overlap,reverse = not filterForm.Ascending.data, key=lambda result: overlap[1])
+        overlap.sort(key = lambda ele : ele[2], reverse = 1)
+        print(overlap[0:5])
+
     end_task = time.time()
     print("#####")
     print("FILTERING FOR SPECIFIED CONSTRAINTS ({} seconds)".format(end_task - start_task))
@@ -55,15 +64,13 @@ def result(source, region, lowerBound, upperBound, page=None):
     # determining results displayed on current page
     if page == None:
         page = 1
-        currentpage = overlap[0:10]
-    else:
-        page = int(page)
-        currentpage = overlap[(page*10-10):(page*10)]
+  
+
+    page = int(page)
+    currentpage = overlap[(page*10-10):(page*10)]
 
 
     # make array of links for pages
-
-
     start_task = time.time()
     currentpage = getDataInfo(currentpage, source) #generic function to handle data information gathering
     end_task = time.time()

@@ -10,7 +10,7 @@ class SearchForm(FlaskForm):
     submit = SubmitField('Search')
 
 class FilterResultsForm(FlaskForm):
-    Ascending = BooleanField('Order Ascending')
+    ascending = BooleanField('Order Ascending')
     sortBy = SelectField(u'Sort By', choices=[('0','Name'), ('2','Overlap'), 
                                                 ('1','Total Regions'), ('3','% Overlapping')])
     submit = SubmitField('Refine')

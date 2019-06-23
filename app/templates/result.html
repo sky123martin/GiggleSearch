@@ -61,7 +61,7 @@
                       {% else %}
                         <h4><font color="#144177">{{ value[0] }}</font> <a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> &#9432;</a></h4>
                         <h5><font color="#7fcdbb"> Overlap: {{ value[2] }}  -  Region Size: {{ value[1] }}  -  Percentage of Overlap: {{ value[3] }}% </font></h5>
-                        <h5> {{ value[5][:-4] | safe}}<a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> &#8690;</a></p></h5>
+                        {{ value[5][:-4] | safe}}<a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> &#8690;</a></p>
                       {% endif %}
                     
                   </td>
@@ -117,7 +117,7 @@
                             <a href="{{"/result/{}/{}:{}-{}/pg:{}".format(source, region, lowerBound, upperBound, i)}}">
                             <table>
                               <tr><font color = "#AEFF54">g</font></tr>
-                              <tr><h5>{{i}}</h5></tr>
+                              <tr><h5>&nbsp;{{i}}</h5></tr>
                             </table>
                           </a>
                           </td>
@@ -125,7 +125,7 @@
                           <td width = 5>
                               <table>
                                 <tr><font color = "#FC6306">g</font></tr>
-                                <tr><h5>{{i}}</h5></tr>
+                                <tr><h5>&nbsp;{{i}}</h5></tr>
                               </table>
                             </td>
                           {% endif %}
@@ -137,7 +137,7 @@
                             <a href="{{"/result/{}/{}:{}-{}/pg:{}".format(source, region, lowerBound, upperBound, i)}}">
                             <table>
                               <tr><font color = "#AEFF54">g</font></tr>
-                              <tr><h5>{{i}}</h5></tr>
+                              <tr><h5>&nbsp;{{i}}</h5></tr>
                             </table>
                           </a>
                           </td>
@@ -145,7 +145,7 @@
                           <td width = 5>
                               <table>
                                 <tr><font color = "#FC6306">g</font></tr>
-                                <tr><h5>{{i}}</h5></tr>
+                                <tr><h5>&nbsp;{{i}}</h5></tr>
                               </table>
                             </td>
                           {% endif %}
