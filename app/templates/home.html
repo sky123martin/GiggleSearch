@@ -1,0 +1,60 @@
+
+
+{% extends "base.html" %}
+{% block app_content %}
+<head>
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+</head>
+<body>
+        <br></br> <br></br> <br></br> <br></br>
+        <H1 style=font-size:100px align="center">Giggle</H1>   
+        <br></br>
+<div class="container">
+	<div class="row justify-content-center">
+                        <div class="col-12 col-md-10 col-lg-8">
+                            <form action="{{ url_for('home') }}" method="post">
+                                <div class="card-body row no-gutters align-items-center">
+                                    <div class="col">
+                                        <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="<lower> : <upper> chr <#> ... from <source>(ie UCSC)">
+                                    </div>
+                                    {{ form.csrf_token }}
+                                    <!-- <div class="col-auto">
+                                            <a href="#" data-toggle="modal" data-target='#help' class="btn btn-lg btn-info">&#9432;</a>
+                                        </div> -->
+                                </div>
+                                <div class="row justify-content-center">
+                                            <div class="col-auto">
+                                                {{ form.submit(class="btn btn-lg btn-primary") }}
+                                            </div>
+                                        </div>
+                            </form>
+                        </div>
+                        <!--end of col-->
+                    </div>
+</div>
+<!--
+<div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h2 class="modal-title"><font color="#7FCD79">Help</font></h2>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script > $('#help').modal(show); </script> -->
+    </body>
+{% endblock %}

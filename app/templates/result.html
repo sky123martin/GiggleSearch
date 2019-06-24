@@ -2,42 +2,25 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
+<H1 style=font-size:50px> <a href="/home">Giggle</a></H1>
+<form method="post">
+        <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="<lower> : <upper> chr <#> ... from <source>(ie UCSC)">
+        {{ form.csrf_token }}
+        <h4> {{ form.submit(class="btn btn-md btn-primary") }} <a href="#" data-toggle="modal" data-target='#filter' class="btn btn-success"><i class="fa fa-edit"></i> Filter Results </a></h4>
 
-    <h4><a href="#" data-toggle="modal" data-target='#search' class="btn btn-success"><i class="fa fa-edit"></i> Search </a> 
-      <a href="#" data-toggle="modal" data-target='#filter' class="btn btn-success"><i class="fa fa-edit"></i> Filter Results </a></h4>
-    <div class="modal fade" id="search" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal">&times;</button>
-              <h2 class="modal-title"><font color="#7FCD79">Search</font></h2>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        {{ wtf.quick_form(searchForm)}}
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <script> $('#search').modal(show); </script>
+</form>
 
       <div class="modal fade" id="filter" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-lg">
             <div class="modal-content">
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h2 class="modal-title"><font color="#7FCD79">Search</font></h2>
+                <h2 class="modal-title"><font color="#7FCD79">Filter</font></h2>
               </div>
               <div class="modal-body">
                   <div class="row">
                       <div class="col-md-4">
-                          {{ wtf.quick_form(form) }}
+                          {{ wtf.quick_form(filterform) }}
                       </div>
                   </div>
               </div>

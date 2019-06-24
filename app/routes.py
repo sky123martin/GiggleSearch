@@ -1,7 +1,7 @@
 from __future__ import print_function
 from flask import Flask, render_template, flash, redirect
 from app import app
-from app.forms import SearchForm, FilterResultsForm
+from app.forms import SearchForm, FilterResultsForm, Search
 from bs4 import BeautifulSoup as bs
 from flaskext.mysql import MySQL
 import time
@@ -14,18 +14,29 @@ app.config['MYSQL_DATABASE_DB'] = 'hg19'
 app.config['MYSQL_DATABASE_HOST'] = 'genome-mysql.soe.ucsc.edu'
 mysql.init_app(app)
 
-@app.route('/')
-@app.route('/index')
-@app.route('/home')
-def index():
-    return render_template('index.html')
-
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/home', methods=['GET', 'POST'])
 @app.route('/search', methods=['GET', 'POST'])
-def search():
-    form = SearchForm()
+def home():
+    form = Search()
     if form.validate_on_submit():
-        return redirect("/result/{}/{}:{}-{}/pg:1".format(form.dataSource.data, form.region.data, form.lowerBound.data, form.upperBound.data))
-    return render_template('search.html', title='Region of Interest:', form=form)
+        print("Recieved Input:",form.Input.data)
+        return parseSearch(form.Input.data)
+
+    return render_template('home.html', form=form)
+
+def parseSearch(Input):
+    result = re.search('^([0-9]*[ \t]*:[ \t]*[0-9]*[ \t]*[chromosome]{0,10}[ \t]*[0-9]{1,2}[ \t]*[ \t,&+])*from[ \t][A-Za-z]*', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
+    if result != None:
+        print("Match Found:",result.group(0))
+        str = result.group(0)
+        numbers = [ int(s) for s in str.split() if s.isdigit()]
+        print(numbers)
+        word_list = str.split()
+        print(word_list[-1])
+        return redirect("/result/{}/chr{}:{}-{}".format(word_list[-1].lower(), numbers[2], numbers[0], numbers[1]))
+    else:
+        print("Parser Error: No Match Found")
 
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>", methods=['GET', 'POST'])
@@ -34,20 +45,22 @@ def search():
 def result(source, region, lowerBound, upperBound, page=None, sort = None, asc = None):
     # Definition of forms:
     filterForm = FilterResultsForm()
-    searchForm = SearchForm()
+    form = Search()
+
     print("#")
-    if searchForm.validate_on_submit():
-        print("REDIRECTING SEARCH")
-        return redirect("/result/{}/{}:{}-{}".format(searchForm.dataSource.data, searchForm.region.data, searchForm.lowerBound.data, searchForm.upperBound.data))
 
     if filterForm.validate_on_submit():
         print("FILTERING SEARCH")
         return redirect("/result/{}/{}:{}-{}/pg:1/srt:{}-{}".format(source, region, lowerBound, upperBound, filterForm.sortBy.data, filterForm.ascending.data))
 
+    if form.validate_on_submit():
+        print("Recieved Input:",form.Input.data)
+        return parseSearch(form.Input.data)
+
     print("INITIATING SEARCH")
     start_total = time.time()
 
-    overlap = getStixData(source, region, lowerBound, upperBound)
+    overlap = getStixData(source.lower(), region, lowerBound, upperBound)
 
     start_task = time.time()
 
@@ -83,7 +96,7 @@ def result(source, region, lowerBound, upperBound, page=None, sort = None, asc =
     print("####################")
     print("RENDERING RESULTS {}-{}".format(page*10-10,page*10))
     print("########################################")
-    return render_template('result.html', page = page, searchForm=searchForm, form = filterForm, results = currentpage, searchtime = end_total - start_total, numresults = len(overlap), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
+    return render_template('result.html', page = page, form = form, filterform = filterForm, results = currentpage, searchtime = end_total - start_total, numresults = len(overlap), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
 
 def getStixData(source, region, lowerBound, upperBound):
     start_task = time.time()
