@@ -2,35 +2,30 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-<H1 style=font-size:50px> <a href="/home">Giggle</a></H1>
 <form method="post">
-        <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="<lower> : <upper> chr <#> ... from <source>(ie UCSC)">
-        {{ form.csrf_token }}
-        <h4> {{ form.submit(class="btn btn-md btn-primary") }} <a href="#" data-toggle="modal" data-target='#filter' class="btn btn-success"><i class="fa fa-edit"></i> Filter Results </a></h4>
-
-</form>
-
-      <div class="modal fade" id="filter" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h2 class="modal-title"><font color="#7FCD79">Filter</font></h2>
-              </div>
-              <div class="modal-body">
-                  <div class="row">
-                      <div class="col-md-4">
-                          {{ wtf.quick_form(filterform) }}
-                      </div>
-                  </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              </div>
+  
+  <table>
+      <tr>
+      <th width = 120px> <H3 style=font-size:30px> <a href="/home"><font color="#144177">G</font><font color="#B12401">i</font><font color = "#0093A0">gg</font><font color="#144177">le</font></a></H3> </th>
+      <th width = 600px> <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="{{lowerBound}} : {{upperBound}} {{region[:-1]}} {{region[3]}} from {{source}}"></H1> </th>
+      <th width = 25px></th>
+      <th width = 600px>   <h4> {{ form.submit(class="btn btn-md btn-primary") }}   <a class="btn btn-danger" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">Filter</a></h4> </th>
+      </tr>
+    </table>
+    {{ form.csrf_token }}       
+  </form>
+    <div class="row">
+      <div class="col">
+        <div class="collapse multi-collapse" id="multiCollapseExample1">
+          <div class="card card-body">
+              <div class="panel panel-default">
+                  <div class="panel-body">{{ wtf.quick_form(filterform) }}   </div>
+                </div>      
             </div>
-          </div>
         </div>
-        <script> $('#filter').modal(show); </script>
+      </div>
+    </div>
+  
         <h6><font color="#7FCD79">{{numresults}} overlapping regions found for {{region}} {{lowerBound}}:{{upperBound}} from {{source}} data ({{searchtime}} seconds)</font></h6>
 
     <table class="table table-hover">
@@ -59,7 +54,7 @@
                 <div class="modal-content">
                   <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h2 class="modal-title"><font color="#7FCD79">{{ value[0] }}</font></h2>
+                    <h2 class="modal-title"><font color="#144177">{{ value[0] }}</font></h2>
                   </div>
                   <div class="modal-body">
                         {{ value[4] | safe}}
@@ -89,7 +84,7 @@
                         {% endif %}
                         <td width = 5>
                             <table >
-                              <tr><font color="#F3FC66">Gi</font></tr>
+                              <tr><font color="#7fcdbb">Gi</font></tr>
                               <tr><font color="white"><h5>_</h5></font></tr>
                             </table>
                         </td>
@@ -99,7 +94,7 @@
                           <td width = 5>
                             <a href="{{"/result/{}/{}:{}-{}/pg:{}".format(source, region, lowerBound, upperBound, i)}}">
                             <table>
-                              <tr><font color = "#AEFF54">g</font></tr>
+                              <tr><font color = "#144177">g</font></tr>
                               <tr><h5>&nbsp;{{i}}</h5></tr>
                             </table>
                           </a>
@@ -107,7 +102,7 @@
                           {% else %}
                           <td width = 5>
                               <table>
-                                <tr><font color = "#FC6306">g</font></tr>
+                                <tr><font color = "#B12401">g</font></tr>
                                 <tr><h5>&nbsp;{{i}}</h5></tr>
                               </table>
                             </td>
@@ -119,7 +114,7 @@
                           <td width = 5>
                             <a href="{{"/result/{}/{}:{}-{}/pg:{}".format(source, region, lowerBound, upperBound, i)}}">
                             <table>
-                              <tr><font color = "#AEFF54">g</font></tr>
+                              <tr><font color = "#144177">g</font></tr>
                               <tr><h5>&nbsp;{{i}}</h5></tr>
                             </table>
                           </a>
@@ -127,7 +122,7 @@
                           {% else %}
                           <td width = 5>
                               <table>
-                                <tr><font color = "#FC6306">g</font></tr>
+                                <tr><font color = "#B12401">g</font></tr>
                                 <tr><h5>&nbsp;{{i}}</h5></tr>
                               </table>
                             </td>
