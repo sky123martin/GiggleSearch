@@ -5,7 +5,7 @@
 <form method="post">
   <table>
       <tr>
-      <th width = 130px> <H3 style=font-size:30px> <a href="/home"><img src="/static/gigglelogo.png" width = "50px" style = "padding-bottom: 0px;" alt="Gi"><font color = "#a4a5a6" style = "font-family:Times New Roman; ">ggle</font></a></H3> </th>
+      <th width = 130px> <H3 style=font-size:30px> <a href="/search"><img src="/static/gigglelogo.png" width = "50px" style = "padding-bottom: 0px;" alt="Gi"><font color = "#a4a5a6" style = "font-family:Times New Roman; ">ggle</font></a></H3> </th>
       <th width = 600px> <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="{{lowerBound}} : {{upperBound}} {{region[:-1]}} {{region[3]}} from {{source}}"></H1> </th>
       <th width = 25px></th>
       <th width = 600px>   <h4> {{ form.submit(class="btn btn-md btn-primary") }}   <a class="btn btn-danger" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">Filter</a></h4> </th>
@@ -34,10 +34,10 @@
                   <td>
                       {% if value[3] == "" or  value[4] == ""%}
                         <h4> <font color="#144177">{{ value[0] }}</font> </h4>
-                        <h5><font color="#7fcdbb"> Overlap: {{ value[1] }}  -  Region Size: {{ value[2] }} </font></h5>
+                        <h5><font color="#7fcdbb"> Overlap: {{ value[2] }}  -  Region Size: {{ value[1] }} </font></h5>
                       {% elif  value[5] == ""%}
                         <h4> <font color="#144177">{{ value[3] }} : {{value[4]}}</font> </h4>
-                        <h5><font color="#7fcdbb"> Overlap: {{ value[1] }}  -  Region Size: {{ value[2] }} - Table Name: {{ value[0] }}</font></h5>
+                        <h5><font color="#7fcdbb"> Overlap: {{ value[2] }}  -  Region Size: {{ value[1] }} - Table Name: {{ value[0] }}</font></h5>
                       {% else%}
                         <h4><font color="#144177">{{ value[3] }} : {{value[4]}}</font> <a href="#" data-toggle="modal" data-target='#descriptionModal{{ value[1] }}{{ value[2] }}' ><i class="fa fa-edit"></i> &#9432;</a></h4>
                         <h5><font color="#7fcdbb"> Overlap: {{ value[2] }}  -  Region Size: {{ value[1] }} - Table Name: {{ value[0] }} </font></h5>
@@ -51,7 +51,7 @@
           </tbody>
           </table>
           {% for value in results%}
-          {% if value[5] != "nan" or  value[4] != "nan"%}
+          {% if value[5] != "" %}
           <div class="modal fade" id="descriptionModal{{ value[1] }}{{ value[2] }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
               <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -74,7 +74,7 @@
 
             <center> 
             <h1>
-                <table style=”border: 1px solid white;”>
+                <table style=”border:1px solid white;”>
                     <tr>
                         {% if page != 1 %}
                         <td width = 100>

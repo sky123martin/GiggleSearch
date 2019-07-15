@@ -1,7 +1,7 @@
 from __future__ import print_function
 from flask import Flask, render_template, flash, redirect
 from app import app
-from app.forms import SearchForm, FilterResultsForm, Search
+from app.forms import SearchForm, FilterResultsForm, Search, UploadForm
 from bs4 import BeautifulSoup as bs
 import pandas as pd 
 import numpy as np 
@@ -20,17 +20,25 @@ app.config['MYSQL_DATABASE_HOST'] = 'genome-mysql.soe.ucsc.edu'
 mysql.init_app(app)
 
 @app.route('/', methods=['GET', 'POST'])
-@app.route('/home', methods=['GET', 'POST'])
 @app.route('/search', methods=['GET', 'POST'])
-def home():
-    form = Search()
-    if form.validate_on_submit():
-        print("Recieved Input:",form.Input.data)
-        return parseSearch(form.Input.data)
+@app.route('/search/<inputtype>', methods=['GET', 'POST'])
+def home(inputtype = None):
+    if inputtype == None or inputtype == "manual":
+        form = Search()
+        inputtype = "manual"
+        if form.validate_on_submit():
+            print("Recieved Input:", form.Input.data)
+            return parseManualSearch(form.Input.data)
+    else:
+        inputtype = "file"
+        form = UploadForm()
+        if form.validate_on_submit():
+            print("File Uploaded")
 
-    return render_template('home.html', form=form)
+    print("Current Input Type: ", inputtype)
+    return render_template('home.html', form = form, inputtype=inputtype)
 
-def parseSearch(Input):
+def parseManualSearch(Input):
     result = re.search('^([0-9]*[ \t]*:[ \t]*[0-9]*[ \t]*[chromosome]{0,10}[ \t]*[0-9]{1,2}[ \t]*[ \t,&+])*from[ \t][A-Za-z]*', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
     if result != None:
         print("Match Found:",result.group(0))
@@ -58,7 +66,7 @@ def result(source, region, lowerBound, upperBound, page=None, sort = None, asc =
 
     if form.validate_on_submit():
         print("Recieved Input:",form.Input.data)
-        return parseSearch(form.Input.data)
+        return parseManualSearch(form.Input.data)
 
     print("INITIATING SEARCH")
     start_total = time.time()
@@ -112,7 +120,7 @@ def result(source, region, lowerBound, upperBound, page=None, sort = None, asc =
     print("####################")
     print("RENDERING RESULTS {}-{}".format(page*10-10,page*10))
     print("########################################")
-    return render_template('result.html', page = page, form = form, filterform = filterForm, pageNums=pageNums, results = currentpage, searchtime = end_total - start_total, numresults = len(overlap), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
+    return render_template('result.html', page = page, form = form, filterform = filterForm, pageNums=pageNums, results = currentpage, allresults = overlap, searchtime = end_total - start_total, numresults = len(overlap), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
 
 def getStixData(source, region, lowerBound, upperBound):
     start_task = time.time()

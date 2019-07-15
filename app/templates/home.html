@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+
 {% block app_content %}
+
 <head>
         <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
         <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
@@ -8,31 +10,48 @@
 </head>
 <body>
         <br></br> <br></br> <br></br> <br></br>
-        <H1 style = font-size:75px align="center"> <img src="static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>   
-        <H4 style = font-size:20px align="center"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >Genomic Interval Overlap Search Engine</font></H4>   
+        <H1 style = font-size:75px align="center"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>   
+        <H4 style = font-size:20px align="center"> <font color="#a4a5a6" style = "font-family:Times New Roman; "> Genomic Interval Overlap Search Engine </font></H4>   
 
         <br></br>
 
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-12 col-md-10 col-lg-8">
-      <form action="{{ url_for('home') }}" method="post">
-      <div class="card-body row no-gutters align-items-center">
-        <div class="col">
-          <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="<lower> : <upper> chr <#> & additional interval...)  from <source>(ie UCSC)">
-        </div>
-        {{ form.csrf_token }}
-      </div>
+{% if inputtype == "file" %}
+  <div class="container">
       <div class="row justify-content-center">
-      <div class="col-auto">
-      {{ form.submit(class="btn btn-lg btn-danger") }} {{ form.submit(class="btn btn-lg btn-primary") }}
+        <div class="col-12 col-md-10 col-lg-8">
+          <form method="post" enctype="multipart/form-data">
+            <div class="row justify-content-center">
+            <div class="col-auto">
+          <div class="card-body row no-gutters align-items-center">
+            {{ form.file }} {{ form.submit(class="btn btn-lg btn-danger") }} <a href="/search/manual"><button class="btn btn-lg btn-primary" type="button"> Manual Search</button></a>
+          </div>
+          </div>
+          </div>
+          </form>
+        </div>
       </div>
+    </div>
+{% else %}
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-10 col-lg-8">
+        <form action="{{ url_for('home') }}" method="post">
+        <div class="card-body row no-gutters align-items-center">
+          <div class="col">
+            <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="<lower> : <upper> chr <#> & additional interval...)  from <source>(ie UCSC)">
+          </div>
+          {{ form.csrf_token }}
+        </div>
+        <div class="row justify-content-center">
+        <div class="col-auto">
+        {{ form.submit(class="btn btn-lg btn-danger") }}  <a href="/search/file"><button class="btn btn-lg btn-primary" type="button"> File Input Search</button></a>
+        </div>
+        </div>
+        </form>
       </div>
-      </form>
     </div>
   </div>
-</div>
-
+{% endif %}
 <!--
 <div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">

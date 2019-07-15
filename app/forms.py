@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, IntegerField, SubmitField, SelectField
 from wtforms.validators import DataRequired
+from flask_wtf.file import FileField
 
 class SearchForm(FlaskForm):
     lowerBound = IntegerField('Lower Bound', validators=[DataRequired()])
@@ -18,3 +19,7 @@ class FilterResultsForm(FlaskForm):
     sortBy = SelectField(u'Sort By', choices=[('0','Name'), ('2','Overlap'), 
                                                 ('1','Total Regions'), ('3','% Overlapping')])
     submit = SubmitField('Refine')
+
+class UploadForm(FlaskForm):
+    file = FileField()
+    submit = SubmitField('Search')
