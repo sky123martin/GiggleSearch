@@ -32,11 +32,15 @@
         {% for intvset in session["intervals"] %}
           <span class="col-sm-3">
           <div class="progress">
-              <div class="progress-bar" role="progressbar" style="width:15%; background-color:rgb(20, 65, 119) !important;">  Chr{{intvset[0][0]}} </div>
+              <div class="progress-bar" role="progressbar" style="width:15%; background-color:rgb(20, 65, 119) !important;">  {{intvset[0][0]}} </div>
                 {% for intv in intvset %}
-                  <div class="progress-bar" role="progressbar" style="width:0.2%; background-color:rgb(250, 250, 250) !important;"></div>
-                  <a href="{{"/result/{}/chr{}:{}-{}".format(intv[3], intv[0], intv[1], intv[2])}}">
+                <div class="progress-bar" role="progressbar" style="width:0.2%; background-color:rgb(250, 250, 250) !important;"></div>
+                <a href="{{"/result/{}/{}:{}-{}".format(intv[3], intv[0], intv[1], intv[2])}}">
+                {% if intv[0] == region and intv[1] == lowerBound and intv[2] == upperBound %}
+                    <div class="progress-bar progress-bar-success" role="progressbar" style="width:30%; background-color:rgb(233, 78, 73) !important;"> {{intv[1]}}:{{intv[2]}} </div>
+                {% else %}
                     <div class="progress-bar progress-bar-success" role="progressbar" style="width:30%; background-color:rgb(102, 159, 250) !important;"> {{intv[1]}}:{{intv[2]}} </div>
+                    {% endif %}
                   </a>
                 {% endfor %}
           </div>
@@ -97,7 +101,7 @@
 
             <center> 
             <h1>
-                <table style=”border:1px solid white;”>
+                <table>
                     <tr>
                         {% if page != 1 %}
                         <td width = 100>

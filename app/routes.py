@@ -49,6 +49,7 @@ def parseManualSearch(Input):
         for x in ExtractedNumbers:
             out = re.findall('[0-9]{1,100}', x)
             out.append(Source[0])
+            out[0] = "chr" + out[0]
             if out != None:
                 intervals.append(out)
 
@@ -58,33 +59,33 @@ def parseManualSearch(Input):
             sortedintv = []
             temp = [intervals[0]]
             for i in range(1,len(intervals)):
-                print(temp)
-                print(intervals[i][0])
                 if intervals[i-1][0] != intervals[i][0]:
-                    print("NEW ROW")
                     sortedintv.append(temp)
                     temp = []
                 temp.append(intervals[i])
             if temp != []:
                 sortedintv.append(temp)
+            session['intervals'] = sortedintv
+            session["LenIntervals"] = len(intervals)
+        else:
+            session['intervals'] = intervals
+            session["LenIntervals"] = len(intervals)
 
-        session['intervals'] = sortedintv
-        session["LenIntervals"] = len(sortedintv)
-
-        return redirect("/result/{}/chr{}:{}-{}".format(Source[0], intervals[0][0], intervals[0][1], intervals[0][2]))
+        return redirect("/result/{}/{}:{}-{}".format(Source[0], intervals[0][0], intervals[0][1], intervals[0][2]))
     else:
         print("Parser Error: No Match Found")
     return "Parser Error: No Match Found for input " + Input
 
+@app.route("/result/<source>/<combined>", methods=['GET', 'POST'])
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>", methods=['GET', 'POST'])
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>/srt:<sort>-<asc>", methods=['GET', 'POST'])
 
-def result(source, region, lowerBound, upperBound, page=None, sort = None, asc = None):
+def result(combined = None, source = None, region = None, lowerBound= None, upperBound = None, page=None, sort = None, asc = None):
     # Definition of forms:
     filterForm = FilterResultsForm()
     form = Search()
-    # print("Result recieved:", session.get('intervals', None))
+    print("Result recieved:", session.get('intervals', None))
     print("#")
 
     if filterForm.validate_on_submit():
@@ -97,8 +98,14 @@ def result(source, region, lowerBound, upperBound, page=None, sort = None, asc =
 
     print("INITIATING SEARCH")
     start_total = time.time()
-
-    overlap = getStixData(source.lower(), region, lowerBound, upperBound)
+    if combined == None:
+        overlap = getStixData([region, lowerBound, upperBound, source.lower()])
+    elif combined == "combined":
+        combinedIntervals = condenseintervals(session.get('intervals', None), source)
+        print(combinedIntervals)
+        pool = ThreadPool(len(combinedIntervals))
+        overlap = pool.map(getStixData, combinedIntervals)[0]
+    print(overlap)
 
     start_task = time.time()
 
@@ -118,7 +125,6 @@ def result(source, region, lowerBound, upperBound, page=None, sort = None, asc =
         page = int(page)
 
     maxpage = int(math.ceil(len(overlap)/10.0))
-    print(len(overlap),len(overlap)/10,math.ceil(len(overlap)/10))
     if page < 7 or maxpage < 10:
         if maxpage < 10:
             pageNums = list(range(1, maxpage + 1))
@@ -147,11 +153,19 @@ def result(source, region, lowerBound, upperBound, page=None, sort = None, asc =
     print("####################")
     print("RENDERING RESULTS {}-{}".format(page*10-10,page*10))
     print("########################################")
-    return render_template('result.html', page = page, form = form, filterform = filterForm, pageNums=pageNums, results = currentpage, allresults = overlap, searchtime = end_total - start_total, numresults = len(overlap), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound)
+    if combined == None:
+        return render_template('result.html', page = page, form = form, filterform = filterForm, pageNums=pageNums, results = currentpage, allresults = overlap, searchtime = end_total - start_total, numresults = len(overlap), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound, combined = False)
+    else:
+        return render_template('result.html', page = page, form = form, filterform = filterForm, pageNums=pageNums, results = currentpage, allresults = overlap, searchtime = end_total - start_total, numresults = len(overlap), source = source, combined = True)
 
-def getStixData(source, region, lowerBound, upperBound):
+def getStixData(data):
+    region = data[0]
+    lowerBound = data[1]
+    upperBound = data[2]
+    source = data[3]
     start_task = time.time()
-    url = 'https://stix.colorado.edu/{}?region={}:{}-{}'.format(source, region, lowerBound, upperBound)
+    url = 'https://stix.colorado.edu/{}?region={}:{}-{}'.format(source.lower(), region, lowerBound, upperBound)
+    print(url)
     request = requests.get(url)
     print("##")
     print("STIX REQUEST + RETURN ({} seconds)".format(time.time() - start_task))
@@ -160,7 +174,6 @@ def getStixData(source, region, lowerBound, upperBound):
     soup = bs(request.text,"lxml")
     text = soup.text.split('\n') 
     results = []
-
     for i in range(0,len(text)-1):
         temp = text[i].split("\t")
         split = temp[0].split("/")
@@ -260,12 +273,17 @@ def getUCSCdescription(html):
             return htmldescr[index:len(htmldescr)]
     return ""
     
-def condenseintervals(intervals):
+def condenseintervals(intervals,source):
     condensedIntervals = []
     for chrom in intervals:
         for interval in chrom:
             if len(condensedIntervals) == 0:
                 condensedIntervals.append(interval)
+            elif condensedIntervals[len(condensedIntervals)-1][0] == interval[0]:
+                if condensedIntervals[len(condensedIntervals)-1][2] > interval[1] and condensedIntervals[len(condensedIntervals)-1][2] < interval[2]:
+                    condensedIntervals[len(condensedIntervals)-1][2] = interval[2]
+                elif condensedIntervals[len(condensedIntervals)-1][2] < interval[1]:
+                    condensedIntervals.append(interval)
             else:
                 condensedIntervals.append(interval)
     return condensedIntervals
