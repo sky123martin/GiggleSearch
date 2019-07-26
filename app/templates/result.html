@@ -6,7 +6,7 @@
   <table>
       <tr>
       <th width = 130px> <H3 style=font-size:30px> <a href="/search"><img src="/static/gigglelogo.png" width = "50px" style = "padding-bottom: 0px;" alt="Gi"><font color = "#a4a5a6" style = "font-family:Times New Roman; ">ggle</font></a></H3> </th>
-      <th width = 600px> <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="{{lowerBound}} : {{upperBound}} {{region[:-1]}} {{region[3]}} from {{source}}"></H1> </th>
+      <th width = 600px> <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="{{region[:-1]}}{{region[3]}} {{lowerBound}} : {{upperBound}} from {{source}}"></H1> </th>
       <th width = 25px></th>
       <th width = 600px>   <h4> {{ form.submit(class="btn btn-md btn-primary") }}   <a class="btn btn-danger" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">Filter</a></h4> </th>
       </tr>
@@ -24,8 +24,31 @@
         </div>
       </div>
     </div>
-  
-        <h6><font color="#144177">{{numresults}} overlapping regions found for {{region}} {{lowerBound}}:{{upperBound}} from {{source}} data ({{searchtime}} seconds)</font></h6>
+
+
+  <div class="container">
+      <div class="row"> 
+      {% if "LenIntervals" in session and  session["LenIntervals"] > 1 %}
+        {% for intvset in session["intervals"] %}
+          <span class="col-sm-3">
+          <div class="progress">
+              <div class="progress-bar" role="progressbar" style="width:15%; background-color:rgb(20, 65, 119) !important;">  Chr{{intvset[0][0]}} </div>
+                {% for intv in intvset %}
+                  <div class="progress-bar" role="progressbar" style="width:0.2%; background-color:rgb(250, 250, 250) !important;"></div>
+                  <a href="{{"/result/{}/chr{}:{}-{}".format(intv[3], intv[0], intv[1], intv[2])}}">
+                    <div class="progress-bar progress-bar-success" role="progressbar" style="width:30%; background-color:rgb(102, 159, 250) !important;"> {{intv[1]}}:{{intv[2]}} </div>
+                  </a>
+                {% endfor %}
+          </div>
+          </span>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+  <!-- <div class="progress-bar" role="progressbar" style="width:10%; background-color:rgb(219, 51, 32) !important;">  Compiled Search</div> -->
+
+
+    <h6><font color="#144177">{{numresults}} overlapping regions found for {{region}} {{lowerBound}}:{{upperBound}} from {{source}} data ({{searchtime}} seconds)</font></h6>
 
     <table class="table table-hover">
             <tbody>

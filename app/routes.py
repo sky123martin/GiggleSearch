@@ -1,5 +1,5 @@
 from __future__ import print_function
-from flask import Flask, render_template, flash, redirect
+from flask import Flask, render_template, flash, redirect, session
 from app import app
 from app.forms import SearchForm, FilterResultsForm, Search, UploadForm
 from bs4 import BeautifulSoup as bs
@@ -39,15 +39,42 @@ def home(inputtype = None):
     return render_template('home.html', form = form, inputtype=inputtype)
 
 def parseManualSearch(Input):
-    result = re.search('^([0-9]*[ \t]*:[ \t]*[0-9]*[ \t]*[chromosome]{0,10}[ \t]*[0-9]{1,2}[ \t]*[ \t,&+])*from[ \t][A-Za-z]*', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
-    if result != None:
-        print("Match Found:",result.group(0))
-        str = result.group(0)
-        numbers = [ int(s) for s in str.split() if s.isdigit()]
-        word_list = str.split()
-        return redirect("/result/{}/chr{}:{}-{}".format(word_list[-1].lower(), numbers[2], numbers[0], numbers[1]))
+    ExtractedNumbers = re.findall('[0-9]{1,2}[ \tab]*[0-9]{1,100}[ \tab]*:[ \tab]*[0-9]{1,100}', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
+    Source = re.findall('[A-Za-z]{3,4}$', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
+        # ^[chromosomeCHROMOSOME]{0,10}[ \t]*[0-9]{1,2}[ \t]*([0-9]*[ \t]*:[ \t]*[0-9]*[ \t]*[ \t,&+])*from[ \t][A-Za-z]*
+    if ExtractedNumbers != None and Source != None:
+        print("Intervals Entered:",ExtractedNumbers)
+        print("Source Entered:",Source)
+        intervals = []
+        for x in ExtractedNumbers:
+            out = re.findall('[0-9]{1,100}', x)
+            out.append(Source[0])
+            if out != None:
+                intervals.append(out)
+
+        if len(intervals)>1:
+            intervals.sort(key = lambda x : (x[0], x[1]))
+            print("Intervals:", intervals)
+            sortedintv = []
+            temp = [intervals[0]]
+            for i in range(1,len(intervals)):
+                print(temp)
+                print(intervals[i][0])
+                if intervals[i-1][0] != intervals[i][0]:
+                    print("NEW ROW")
+                    sortedintv.append(temp)
+                    temp = []
+                temp.append(intervals[i])
+            if temp != []:
+                sortedintv.append(temp)
+
+        session['intervals'] = sortedintv
+        session["LenIntervals"] = len(sortedintv)
+
+        return redirect("/result/{}/chr{}:{}-{}".format(Source[0], intervals[0][0], intervals[0][1], intervals[0][2]))
     else:
         print("Parser Error: No Match Found")
+    return "Parser Error: No Match Found for input " + Input
 
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>", methods=['GET', 'POST'])
@@ -57,7 +84,7 @@ def result(source, region, lowerBound, upperBound, page=None, sort = None, asc =
     # Definition of forms:
     filterForm = FilterResultsForm()
     form = Search()
-
+    # print("Result recieved:", session.get('intervals', None))
     print("#")
 
     if filterForm.validate_on_submit():
@@ -144,7 +171,6 @@ def getStixData(source, region, lowerBound, upperBound):
                 temp[0] = split[1]
 
             temp[0] = temp[0].split(".bed.gz")[0]
-            # temp.append(round(((temp[2]/temp[1])*100.0),10))
             if temp[0][-4:] != "Link":
                 results.append(temp)
     print("####")
@@ -234,3 +260,12 @@ def getUCSCdescription(html):
             return htmldescr[index:len(htmldescr)]
     return ""
     
+def condenseintervals(intervals):
+    condensedIntervals = []
+    for chrom in intervals:
+        for interval in chrom:
+            if len(condensedIntervals) == 0:
+                condensedIntervals.append(interval)
+            else:
+                condensedIntervals.append(interval)
+    return condensedIntervals
