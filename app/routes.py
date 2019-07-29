@@ -77,6 +77,8 @@ def parseManualSearch(Input):
     return "Parser Error: No Match Found for input " + Input
 
 @app.route("/result/<source>/<combined>", methods=['GET', 'POST'])
+@app.route("/result/<source>/<combined>/pg:<page>", methods=['GET', 'POST'])
+@app.route("/result/<source>/<combined>/pg:<page>/srt:<sort>-<asc>", methods=['GET', 'POST'])
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>", methods=['GET', 'POST'])
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>/srt:<sort>-<asc>", methods=['GET', 'POST'])
@@ -87,10 +89,14 @@ def result(combined = None, source = None, region = None, lowerBound= None, uppe
     form = Search()
     print("Result recieved:", session.get('intervals', None))
     print("#")
+    if combined == None:
+        identifier = region + ":" + lowerBound + "-" + upperBound
+    else:
+        identifier = "combined"
 
     if filterForm.validate_on_submit():
         print("FILTERING SEARCH")
-        return redirect("/result/{}/{}:{}-{}/pg:1/srt:{}-{}".format(source, region, lowerBound, upperBound, filterForm.sortBy.data, filterForm.ascending.data))
+        return redirect("/result/{}/{}/pg:1/srt:{}-{}".format(source, identifier, filterForm.sortBy.data, filterForm.ascending.data))
 
     if form.validate_on_submit():
         print("Recieved Input:",form.Input.data)
@@ -98,14 +104,16 @@ def result(combined = None, source = None, region = None, lowerBound= None, uppe
 
     print("INITIATING SEARCH")
     start_total = time.time()
+
     if combined == None:
         overlap = getStixData([region, lowerBound, upperBound, source.lower()])
     elif combined == "combined":
-        combinedIntervals = condenseintervals(session.get('intervals', None), source)
-        print(combinedIntervals)
+        intevals = session.get('intervals', None)
+        combinedIntervals = condenseintervals(intevals)
         pool = ThreadPool(len(combinedIntervals))
-        overlap = pool.map(getStixData, combinedIntervals)[0]
-    print(overlap)
+        allresults = pool.map(getStixData, combinedIntervals)
+        if len(combinedIntervals) > 1:
+            overlap = aggregate(allresults)
 
     start_task = time.time()
 
@@ -153,10 +161,21 @@ def result(combined = None, source = None, region = None, lowerBound= None, uppe
     print("####################")
     print("RENDERING RESULTS {}-{}".format(page*10-10,page*10))
     print("########################################")
-    if combined == None:
-        return render_template('result.html', page = page, form = form, filterform = filterForm, pageNums=pageNums, results = currentpage, allresults = overlap, searchtime = end_total - start_total, numresults = len(overlap), source = source, region = region, lowerBound = lowerBound, upperBound = upperBound, combined = False)
-    else:
-        return render_template('result.html', page = page, form = form, filterform = filterForm, pageNums=pageNums, results = currentpage, allresults = overlap, searchtime = end_total - start_total, numresults = len(overlap), source = source, combined = True)
+    return render_template('result.html', page = page, form = form, filterform = filterForm, pageNums=pageNums, results = currentpage, allresults = overlap, searchtime = end_total - start_total, numresults = len(overlap), source = source, identifier=identifier)
+
+def aggregate(array):
+    OGArray = pd.DataFrame(array[0], columns = ['tablename' , 'total', 'overlap'])
+    test = pd.DataFrame(array[0], columns = ['tablename' , 'total', 'overlap'])
+    for i in array:
+        temp = pd.DataFrame(i, columns = ['tablename' , 'total', 'overlap'])
+        OGArray = pd.merge(OGArray, temp, how="outer", on=['tablename', 'total']).fillna(0)
+        test = pd.merge(test, temp, how="outer", on=['tablename', 'total']).fillna(0)
+        OGArray['overlap'] = OGArray['overlap_x'] + OGArray['overlap_y']
+        OGArray = OGArray[['tablename' , 'total', 'overlap']]
+
+    # print(OGArray.head())
+    # print(test.head())
+    return OGArray.values.tolist()
 
 def getStixData(data):
     region = data[0]
@@ -273,17 +292,17 @@ def getUCSCdescription(html):
             return htmldescr[index:len(htmldescr)]
     return ""
     
-def condenseintervals(intervals,source):
-    condensedIntervals = []
+def condenseintervals(intervals):
+    CI = []
     for chrom in intervals:
         for interval in chrom:
-            if len(condensedIntervals) == 0:
-                condensedIntervals.append(interval)
-            elif condensedIntervals[len(condensedIntervals)-1][0] == interval[0]:
-                if condensedIntervals[len(condensedIntervals)-1][2] > interval[1] and condensedIntervals[len(condensedIntervals)-1][2] < interval[2]:
-                    condensedIntervals[len(condensedIntervals)-1][2] = interval[2]
-                elif condensedIntervals[len(condensedIntervals)-1][2] < interval[1]:
-                    condensedIntervals.append(interval)
+            if len(CI) == 0:
+                CI.append(interval)
+            elif CI[len(CI)-1][0] == interval[0]:
+                if CI[len(CI)-1][2] > interval[1] and CI[len(CI)-1][2] < interval[2]:
+                    CI[len(CI)-1][2] = interval[2]
+                elif CI[len(CI)-1][2] < interval[1]:
+                    CI.append(interval)
             else:
-                condensedIntervals.append(interval)
-    return condensedIntervals
+                CI.append(interval)
+    return CI
