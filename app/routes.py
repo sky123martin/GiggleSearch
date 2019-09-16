@@ -1,8 +1,12 @@
 from __future__ import print_function
-from flask import Flask, render_template, flash, redirect, session
+from flask import Flask, render_template, flash, request, redirect, session
 from app import app
-from app.forms import SearchForm, FilterResultsForm, Search, UploadForm
+from app.forms import SearchForm, FilterResultsForm, Search, FileUploadForm
 from bs4 import BeautifulSoup as bs
+from flask_wtf import Form
+from flask_wtf.file import FileField
+from werkzeug import secure_filename
+from werkzeug.datastructures import CombinedMultiDict
 import pandas as pd 
 import numpy as np 
 from multiprocessing.dummy import Pool as ThreadPool 
@@ -31,15 +35,19 @@ def home(inputtype = None):
             return parseManualSearch(form.Input.data)
     else:
         inputtype = "file"
-        form = UploadForm()
+        form = FileUploadForm(CombinedMultiDict((request.files, request.form)))
+
         if form.validate_on_submit():
-            print("File Uploaded")
+            f = form.file.data
+            filename = secure_filename(f.filename)
+            print("File Uploaded:", filename)
+            print(f)
 
     print("Current Input Type: ", inputtype)
     return render_template('home.html', form = form, inputtype=inputtype)
 
 def parseManualSearch(Input):
-    ExtractedNumbers = re.findall('[0-9]{1,2}[ \tab]*[0-9]{1,100}[ \tab]*:[ \tab]*[0-9]{1,100}', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
+    ExtractedNumbers = re.findall('[0-9]{1,2}[ \t]*[0-9]{1,100}[ \t]*[:]*[ \t]*[0-9]{1,100}', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
     Source = re.findall('[A-Za-z]{3,4}$', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
         # ^[chromosomeCHROMOSOME]{0,10}[ \t]*[0-9]{1,2}[ \t]*([0-9]*[ \t]*:[ \t]*[0-9]*[ \t]*[ \t,&+])*from[ \t][A-Za-z]*
     if ExtractedNumbers != None and Source != None:

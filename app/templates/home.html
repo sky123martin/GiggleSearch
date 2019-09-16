@@ -23,7 +23,14 @@
             <div class="row justify-content-center">
             <div class="col-auto">
           <div class="card-body row no-gutters align-items-center">
-            {{ form.file }} {{ form.submit(class="btn btn-lg btn-danger") }} <a href="/search/manual"><button class="btn btn-lg btn-primary" type="button"> Manual Search</button></a>
+
+            <!-- {{ form.file }} {{ form.submit(class="btn btn-lg btn-danger") }} -->
+            <form method="POST" enctype="multipart/form-data">
+              {{ form.hidden_tag() }}
+              {{ form.file }}
+              <input type="submit">
+            </form>
+            <a href="/search/manual"><button class="btn btn-lg btn-primary" type="button"> Switch to Manual Search</button></a>
           </div>
           </div>
           </div>
