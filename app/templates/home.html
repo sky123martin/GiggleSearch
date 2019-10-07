@@ -15,7 +15,7 @@
 
         <br></br>
 
-<!-- {% if inputtype == "file" %}
+{% if inputtype == "file" %}
   <div class="container">
       <div class="row justify-content-center">
         <div class="col-12 col-md-10 col-lg-8">
@@ -23,6 +23,8 @@
             <div class="row justify-content-center">
             <div class="col-auto">
           <div class="card-body row no-gutters align-items-center">
+
+            <!-- {{ form.file }} {{ form.submit(class="btn btn-lg btn-danger") }} -->
             <form method="POST" enctype="multipart/form-data">
               {{ form.hidden_tag() }}
               {{ form.file }}
@@ -36,7 +38,7 @@
         </div>
       </div>
     </div>
-{% else %} -->
+{% else %}
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-12 col-md-10 col-lg-8">
@@ -49,15 +51,14 @@
         </div>
         <div class="row justify-content-center">
         <div class="col-auto">
-        {{ form.submit(class="btn btn-lg btn-danger") }}  
-        <!-- <a href="/search/file"><button class="btn btn-lg btn-primary" type="button"> File Input Search</button></a> -->
+        {{ form.submit(class="btn btn-lg btn-danger") }}  <a href="/search/file"><button class="btn btn-lg btn-primary" type="button"> File Input Search</button></a>
         </div>
         </div>
         </form>
       </div>
     </div>
   </div>
-<!-- {% endif %} -->
+{% endif %}
 <!--
 <div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">

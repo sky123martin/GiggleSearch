@@ -1,22 +1,21 @@
 from __future__ import print_function
 from flask import Flask, render_template, flash, request, redirect, session
 from app import app
-from app.forms import SearchForm, FilterResultsForm, Search # , FileUploadForm
+from app.forms import SearchForm, FilterResultsForm, Search, FileUploadForm
 from bs4 import BeautifulSoup as bs
 from flask_wtf import Form
-from flaskext.mysql import MySQL
-from flaskext.mysql import MySQL
 from flask_wtf.file import FileField
-from multiprocessing.dummy import Pool as ThreadPool 
-import multiprocessing
+from werkzeug import secure_filename
+from werkzeug.datastructures import CombinedMultiDict
 import pandas as pd 
 import numpy as np 
+from multiprocessing.dummy import Pool as ThreadPool 
+import multiprocessing
+from flaskext.mysql import MySQL
 import time
 import math
 import requests
 import re
-# from werkzeug import secure_filename
-# from werkzeug.datastructures import CombinedMultiDict
 
 mysql = MySQL()
 app.config['MYSQL_DATABASE_USER'] = 'genome'
@@ -28,21 +27,21 @@ mysql.init_app(app)
 @app.route('/search', methods=['GET', 'POST'])
 @app.route('/search/<inputtype>', methods=['GET', 'POST'])
 def home(inputtype = None):
-    # if inputtype == None or inputtype == "manual":
-    form = Search()
-    inputtype = "manual"
-    if form.validate_on_submit():
-        print("Recieved Input:", form.Input.data)
-        return parseManualSearch(form.Input.data)
-    # else:
-    #     inputtype = "file"
-    #     form = FileUploadForm(CombinedMultiDict((request.files, request.form)))
+    if inputtype == None or inputtype == "manual":
+        form = Search()
+        inputtype = "manual"
+        if form.validate_on_submit():
+            print("Recieved Input:", form.Input.data)
+            return parseManualSearch(form.Input.data)
+    else:
+        inputtype = "file"
+        form = FileUploadForm(CombinedMultiDict((request.files, request.form)))
 
-    #     if form.validate_on_submit():
-    #         f = form.file.data
-    #         filename = secure_filename(f.filename)
-    #         print("File Uploaded:", filename)
-    #         print(f)
+        if form.validate_on_submit():
+            f = form.file.data
+            filename = secure_filename(f.filename)
+            print("File Uploaded:", filename)
+            print(f)
 
     print("Current Input Type: ", inputtype)
     return render_template('home.html', form = form, inputtype=inputtype)
