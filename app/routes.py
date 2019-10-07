@@ -4,18 +4,19 @@ from app import app
 from app.forms import SearchForm, FilterResultsForm, Search # , FileUploadForm
 from bs4 import BeautifulSoup as bs
 from flask_wtf import Form
+from flaskext.mysql import MySQL
+from flaskext.mysql import MySQL
 from flask_wtf.file import FileField
-from werkzeug import secure_filename
-from werkzeug.datastructures import CombinedMultiDict
-import pandas as pd 
-import numpy as np 
 from multiprocessing.dummy import Pool as ThreadPool 
 import multiprocessing
-from flaskext.mysql import MySQL
+import pandas as pd 
+import numpy as np 
 import time
 import math
 import requests
 import re
+# from werkzeug import secure_filename
+# from werkzeug.datastructures import CombinedMultiDict
 
 mysql = MySQL()
 app.config['MYSQL_DATABASE_USER'] = 'genome'
