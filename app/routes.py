@@ -1,7 +1,7 @@
 from __future__ import print_function
 from flask import Flask, render_template, flash, request, redirect, session
 from app import app
-from app.forms import SearchForm, FilterResultsForm, Search, FileUploadForm
+from app.forms import SearchForm, FilterResultsForm, Search#, FileUploadForm
 from bs4 import BeautifulSoup as bs
 from flask_wtf import Form
 from flask_wtf.file import FileField
@@ -33,15 +33,14 @@ def home(inputtype = None):
         if form.validate_on_submit():
             print("Recieved Input:", form.Input.data)
             return parseManualSearch(form.Input.data)
-    else:
-        inputtype = "file"
-        form = FileUploadForm(CombinedMultiDict((request.files, request.form)))
-
-        if form.validate_on_submit():
-            f = form.file.data
-            filename = secure_filename(f.filename)
-            print("File Uploaded:", filename)
-            print(f)
+    # else:
+    #     inputtype = "file"
+    #     form = FileUploadForm(CombinedMultiDict((request.files, request.form)))
+    #     if form.validate_on_submit():
+    #         f = form.file.data
+    #         filename = secure_filename(f.filename)
+    #         print("File Uploaded:", filename)
+    #         print(f)
 
     print("Current Input Type: ", inputtype)
     return render_template('home.html', form = form, inputtype=inputtype)
