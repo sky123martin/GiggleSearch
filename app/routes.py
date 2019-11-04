@@ -17,12 +17,6 @@ import math
 import requests
 import re
 
-mysql = MySQL()
-app.config['MYSQL_DATABASE_USER'] = 'genome'
-app.config['MYSQL_DATABASE_DB'] = 'hg19'
-app.config['MYSQL_DATABASE_HOST'] = 'genome-mysql.soe.ucsc.edu'
-mysql.init_app(app)
-
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/search', methods=['GET', 'POST'])
 @app.route('/search/<inputtype>', methods=['GET', 'POST'])
@@ -225,6 +219,11 @@ def getDataInfo(data, source):
 def getUCSCData(results):
     # Dataformat: [tablename, regionsize, overlap, shortname, longname, html, description]
     # 1. Query all at once and sort results
+    mysql = MySQL()
+    app.config['MYSQL_DATABASE_USER'] = 'genome'
+    app.config['MYSQL_DATABASE_DB'] = 'hg19'
+    app.config['MYSQL_DATABASE_HOST'] = 'genome-mysql.soe.ucsc.edu'
+    mysql.init_app(app)
     print(results[1])
     start_task = time.time()
     conn = mysql.connect()
