@@ -7,37 +7,37 @@ We will need to install python packages and create an virtual enviroment in orde
 1. Install pip (package manager)
 
     On macOS and Linux:
-    ```python
+    ```unix
     python3 -m pip install --user --upgrade pip
     ```
 
 
     On Windows:
-    ```python
+    ```unix
     py -m pip install --upgrade pip
     ```
 
 2. Install Virtual Enviorment
 
     On macOS and Linux:
-    ```python
+    ```unix
     python3 -m pip install --user virtualenv
     ```
 
     On Windows:
-    ```python
+    ```unix
     py -m pip install --user virtualenv
     ```
 
 3. Create Virtual Enviorment
 
     On macOS and Linux:
-    ```python
+    ```unix
     python3 -m venv env
     ```
 
     On Windows:
-    ```python
+    ```unix
     py -m venv env
     ```
 
@@ -45,40 +45,40 @@ We will need to install python packages and create an virtual enviroment in orde
 4. Activate Virtual Enviorment
 
     On macOS and Linux:
-    ```python
+    ```unix
     source env/bin/activate
     ```
 
     On Windows:
-    ```python
+    ```unix
     .\env\Scripts\activate
     ```
 
     Check Python versions:
     
     On macOS and Linux:
-    ```python
+    ```unix
     which python
     ```
 
     On Windows:
-    ```python
+    ```unix
     where python
     ```
 
 5. Install Requirments
 
-    ```python
+    ```unix
     pip install -r requirements.txt
     ```
 
 6. Run Application
-    ```python
+    ```unix
     export FLASK_APP=app
     flask run
     ```
 7. Exit Enviorment
-    ```python
+    ```unix
     deactivate
     ```
 
@@ -89,21 +89,21 @@ We will need to install python packages and create an virtual enviroment in orde
 1. Activate Virtual Enviorment
 
     On macOS and Linux:
-    ```python
+    ```unix
     source env/bin/activate
     ```
 
     On Windows:
-    ```python
+    ```unix
     .\env\Scripts\activate
     ```
 
 2. Run Application
-    ```python
+    ```unix
     export FLASK_APP=app
     flask run
     ```
 3. Exit Enviorment
-    ```python
+    ```unix
     deactivate
     ```
