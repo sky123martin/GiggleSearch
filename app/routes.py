@@ -251,7 +251,7 @@ def getUCSCData(results):
 
     ## 2. With multithreading on individual queries
     # start_task = time.time()
-    # pool = ThreadPool(100) 
+    # pool = ThreadPool(10) 
     # end = pool.map(queryUCSC, results)
     # end_task = time.time()
     # print("Multithreading:", end_task - start_task)
