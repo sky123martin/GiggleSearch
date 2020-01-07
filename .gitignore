@@ -12,3 +12,5 @@ package-lock.json
 dist/
 build/
 *.egg-info/
+.vscode/
+get-pip.py

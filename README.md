@@ -8,38 +8,45 @@ We will need to install python packages and create an virtual enviroment in orde
 
     On macOS and Linux:
     ```unix
-    python3 -m pip install --user --upgrade pip
+    python get-pip.py
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     ```
 
 
-    On Windows:
+    <!-- On Windows:
     ```unix
     py -m pip install --upgrade pip
-    ```
+    ``` -->
 
 2. Install Virtual Enviorment
 
     On macOS and Linux:
     ```unix
-    python3 -m pip install --user virtualenv
+    pip3 install virtualenv
     ```
 
-    On Windows:
+    <!-- On Windows:
     ```unix
-    py -m pip install --user virtualenv
-    ```
+    pip install virtualenv
+    ``` -->
 
 3. Create Virtual Enviorment
 
-    On macOS and Linux:
+    On macOS and Linux (copy output):
+    Retrieve python3 location
+    
     ```unix
-    python3 -m venv env
+    which python3
+    ```  
+
+    ```unix
+    virtualenv -p /which/python3/output/ env
     ```
 
-    On Windows:
+    <!-- On Windows:
     ```unix
     py -m venv env
-    ```
+    ``` -->
 
 
 4. Activate Virtual Enviorment
@@ -49,22 +56,22 @@ We will need to install python packages and create an virtual enviroment in orde
     source env/bin/activate
     ```
 
-    On Windows:
+    <!-- On Windows:
     ```unix
     .\env\Scripts\activate
-    ```
+    ``` -->
 
     Check Python versions:
     
     On macOS and Linux:
     ```unix
-    which python
+    python -V
     ```
 
-    On Windows:
+    <!-- On Windows:
     ```unix
     where python
-    ```
+    ``` -->
 
 5. Install Requirments
 
@@ -77,14 +84,20 @@ We will need to install python packages and create an virtual enviroment in orde
     export FLASK_APP=app
     flask run
     ```
+
 7. Exit Enviorment
     ```unix
     deactivate
     ```
 
+8. Delete Enviorment (optional)
+    ```unix
+    rm -rf env
+    ```
+
 
 ### Return Setup:
-We will need to install python packages and create an virtual enviroment in order to host giggle search locally.
+Instructions if you have already configured env.
 
 1. Activate Virtual Enviorment
 

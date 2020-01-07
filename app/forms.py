@@ -15,11 +15,11 @@ class Search(FlaskForm):
     Input = StringField ('Input', validators=[DataRequired()])
     submit = SubmitField('Search For Overlapping Intervals')
 
-class FilterResultsForm(FlaskForm):
-    ascending = BooleanField('Order Ascending')
-    sortBy = SelectField(u'Sort By', choices=[('0','Name'), ('2','Overlap'), 
-                                                ('1','Total Regions'), ('3','% Overlapping')])
-    submit = SubmitField('Refine')
+# class FilterResultsForm(FlaskForm):
+#     ascending = BooleanField('Order Ascending')
+#     sortBy = SelectField(u'Sort By', choices=[('0','Name'), ('2','Overlap'), 
+#                                                 ('1','Total Regions'), ('3','% Overlapping')])
+#     submit = SubmitField('Refine')
 
 # class UploadForm(FlaskForm):
 #     file = FileField()
