@@ -48,12 +48,15 @@ def home(inputtype = None):
     print("Current Input Type: ", inputtype)
     return render_template('home.html', form = form, inputtype=inputtype)
 
+def sort(array, index, asc = True):
+    if asc:
+        array.sort(key = lambda ele : ele[index], reverse = 0)
+    else:
+        array.sort(key = lambda ele : ele[index], reverse = 1)
+    app.jinja_env.globals.update(allresults = allresults )
 
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
-@app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>", methods=['GET', 'POST'])
-@app.route("/result/<source>/<region>:<lowerBound>-<upperBound>/pg:<page>/srt:<sort>-<asc>", methods=['GET', 'POST'])
-
-def result(source = None, region = None, lowerBound= None, upperBound = None, page=None, sort = None, asc = None):
+def result(source, region, lowerBound, upperBound):
     # Definition of forms:
     form = Search()
     print("Result recieved:", session.get('intervals', None))
@@ -67,25 +70,19 @@ def result(source = None, region = None, lowerBound= None, upperBound = None, pa
 
     print("INITIATING SEARCH")
     start_total = time.time()
-    overlap = search.single_overlap([region, lowerBound, upperBound, source.lower()])
-
     start_task = time.time()
 
-    if sort != None:
-        overlap.sort(key = lambda ele : ele[int(sort)], reverse = bool(asc))
-    else:
-        overlap.sort(key = lambda ele : ele[2], reverse = 1)
+    overlap = search.single_overlap([region, lowerBound, upperBound, source.lower()])
+
+    overlap.sort(key = lambda ele : ele[2], reverse = 1)
 
     end_task = time.time()
     print("#####")
     print("FILTERING FOR SPECIFIED CONSTRAINTS ({} seconds)".format(end_task - start_task))
     #Pagination
     # determining results displayed on current page
-    if page == None:
-        page = 1
-    else:
-        page = int(page)
-
+    
+    page = 1
     maxpage = int(math.ceil(len(overlap)/10.0))
     if page < 7 or maxpage < 10:
         if maxpage < 10:
@@ -119,8 +116,7 @@ def result(source = None, region = None, lowerBound= None, upperBound = None, pa
     for name in overlap:
         name.append(i)
         i = i +1
-
-    return render_template('result.html', form = form, results = json.dumps(overlap), allresults = overlap, searchtime = end_total - start_total, numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
+    return render_template('result.html', form = form, results = overlap, allresults = overlap, searchtime = end_total - start_total, numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
 
 def getDataInfo(data, source):
     if source == "UCSC" or source == "ucsc":

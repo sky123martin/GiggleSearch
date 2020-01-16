@@ -16,7 +16,6 @@ class userInput:
     def parseManualSearch(self, Input):
         ExtractedNumbers = re.findall('[0-9]{1,2}[ \t]*[0-9]{1,100}[ \t]*[:]*[ \t]*[0-9]{1,100}', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
         Source = re.findall('[A-Za-z]{3,4}$', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
-            # ^[chromosomeCHROMOSOME]{0,10}[ \t]*[0-9]{1,2}[ \t]*([0-9]*[ \t]*:[ \t]*[0-9]*[ \t]*[ \t,&+])*from[ \t][A-Za-z]*
         if ExtractedNumbers != None and Source != None:
             print("Intervals Entered:",ExtractedNumbers)
             print("Source Entered:",Source)
@@ -96,15 +95,6 @@ class UCSC:
         pass
 
     def getUCSCData(self, results):
-        # Dataformat: [tablename, regionsize, overlap, shortname, longname, html, description]
-        # 1. Query all at once and sort results
-        # mysql = MySQL()
-        # app.config['MYSQL_DATABASE_USER'] = 'genome'
-        # app.config['MYSQL_DATABASE_DB'] = 'hg19'
-        # app.config['MYSQL_DATABASE_HOST'] = 'genome-mysql.soe.ucsc.edu'
-        # print(results[1])
-        # mysql = MySQL()
-        # mysql.init_app(app)
         start_task = time.time()
         conn = mysql.connect()
         cursor = conn.cursor()
@@ -116,11 +106,12 @@ class UCSC:
             orderedlist.append(row)
         orderedlist = pd.DataFrame(orderedlist, columns=["tableName", "shortLabel", "longLabel", "html"])
         dfresults = pd.DataFrame(results, columns=["tableName","regionsize","overlap"])
-        result = pd.merge(dfresults, orderedlist, how='left', on='tableName')
+        result = pd.merge(dfresults, orderedlist, how='inner', on='tableName')
         result = result.fillna("")
         result = result.values.tolist()
 
         for data in result:
+            data[5] = data[5].decode('latin-1') 
             if data[5] != "":
                 data.append(self.getUCSCdescription(data[5]))
             else:
