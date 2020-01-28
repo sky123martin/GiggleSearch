@@ -1,19 +1,23 @@
-{% extends "base.html" %}
-
-{% block app_content %}
+<!DOCTYPE html>
+<html>
 
 <head>
-        <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-        <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">
+        <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
-        <br></br> <br></br> <br></br> <br></br>
-        <H1 style = font-size:75px align="center"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>   
+ 
+    <div class="container">
+        <br></br> <br></br> <br></br>
+        <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>   
         <H4 style = font-size:20px align="center"> <font color="#a4a5a6" style = "font-family:Times New Roman; "> Genomic Interval Overlap Search Engine </font></H4>   
 
         <br></br>
+      </div>
 
 <!-- {% if inputtype == "file" %}
   <div class="container">
@@ -36,48 +40,150 @@
         </div>
       </div>
     </div>
-{% else %} -->
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-12 col-md-10 col-lg-8">
-        <form action="{{ url_for('home') }}" method="post">
-        <div class="card-body row no-gutters align-items-center">
-          <div class="col">
-            <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="chr <#> <lower> : <upper> & additional interval...)  from <source>(ie UCSC)">
+{% endif %} -->
+  <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
+      <div class="form-group row justify-content-md-center">
+          <div class="col col-md-6">
+            <input class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="chr<#>: <lower> - <upper> , (additional intervals...)  from <source>">
           </div>
-          {{ form.csrf_token }}
         </div>
+        {% if error != None %}
         <div class="row justify-content-center">
-        <div class="col-auto">
-        {{ form.submit(class="btn btn-lg btn-danger") }}
-          <!-- <a href="/search/file"><button class="btn btn-lg btn-primary" type="button"> File Input Search</button></a> -->
+            <div class="alert alert-danger" role="alert">
+                {{error}} Click help icon for formatting rules and examples.
+            </div>
         </div>
-        </div>
-        </form>
+        {% endif %}
+        <div class="form-group row justify-content-md-center">
+          <div class="col-md-auto">
+              <div class="btn-group" id = "searchform">
+                  <button type="submit" onclick="loading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
+                  <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                      &#9432;</button>
+                </div>
+            {{ form.csrf_token }}
+          </div>
       </div>
+  </form>
+
+  </div>
+  
+
+  <div class="collapse justify-content-center" id="collapseExample">
+      <div class="row justify-content-center">
+    <div class="card card-body col-9">
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <h4 style="color:#00008b;">Giggle Search</h4>
+              <p>As an interface for the algorihtm <a href="https://github.com/ryanlayer/giggle">Giggle</a> this search engine takes user inputted chromosone regions and finds overlapping annotation files in genomic databases, such as the UCSC Genomic Institute.  </p>
+            </li>
+            <li class="list-group-item">
+                <h4 style="color:#00008b;">HOW TO: Text Input Interval Search</h4>
+              <p>
+                Enter interval/s of interest in designated format:<br>
+                 - General Format for Single Interval: chr(#): (lower bound base position) - (upper bound base position) from (source)<br>
+                 - General Format for Multi Interval: chr(#): (lower bound base position) - (upper bound base position), (lower bound base position) - (upper bound base position), ... ,chr(#):(lower bound base position) - (upper bound base position)  from (source)<br>
+              
+                 <br> <br>
+               The parser will take variable formats, for example the ":" or "-" seperating the chr and the bounds just needs to be some symbol. 
+               <br><br> But to be valid:
+               <br>
+               1. The chr(#) must not have a space between the number and the string "chr"
+               <br>
+               2. The chromosome/bounds must each have a seperator between them (either a space or symbol)
+               <br>
+               3. The last word in the query must be the source name code as specified below.
+               <br>
+               4. Extra spaces or symbols will be removed during parsing
+              <br> <br>
+               chr2:1000-2000 from UCSC will be parsed the same as chr2??1000---2000 FrOmm UCSC. But just because you CAN, does not mean you SHOULD.
+               <br> <br>
+               It will be easiest and most accurate if you follow the pattern format below. Here are some examples:
+
+              </p>
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                          <th scope="col">Example</th>
+                          <th scope="col">Input</th>
+                          <th scope="col">Interpretation</th>
+                        </tr>
+                      </thead>
+                      <tr>
+                          <th>Single Interval</th>
+                          <td>ch1: 100-2000 from UCSC</td>
+                          <td>Finds overlap in bases 100 to 2000 in Chromosome 1 with files from UCSC.</td>
+                      </tr>
+                      <tr>
+                          <th>Multi Interval & Single Chromosome</th>
+                          <td>chr1:100-2000, 150000-160000 from UCSC  <br> or equivalently <br> chr1:100-2000, chr1:50000-160000 from UCSC</td>
+                          <td>Finds overlap in bases 100 to 2000 in Chromosome 1 or bases 150000 to 160000in Chromosome 1 with files from UCSC.</td>
+                      </tr>
+                      <tr>
+                          <th>#1 Multi Interval & Chromosome</th>
+                          <td>chr2:100-2000, chr1:50000-160000 from UCSC</td>
+                          <td>Finds overlap in bases 100 to 2000 in Chromosome 1, or bases 100 to 2000 in Chromosome 1 with files from UCSC.</td>
+                      </tr>
+                      <tr>
+                          <th>#2 Multi Interval & Chromosome</th>
+                          <td>chr2:100-2000,5000-60000, chr1:50000-160000 in UCSC</td>
+                          <td>Finds overlap in bases 50000 to 160000 in Chromosome 1, or bases 100 to 2000 in Chromosome 2, or bases 5000 to 60000 in Chromosome 2 with files from UCSC.</td>
+                      </tr>
+                      <tr>
+                          <td colspan="3">
+                            <p> ** Important Note about Multi Interval search: entering multiple intervals does not return combined overlapping bases, instead it finds overlap for each interval and allows you to toggle between the intervals entered </p>
+                            </td>
+                      </tr>
+                </table>
+                
+                <h5> Current Restrictions (Subject to Change with New Versions)</h5>
+                <table class="table">
+                    <tr>
+                        <th>Available Data Sources</th>
+                        <td>UCSC: UCSC Human Feb. 2009 (GRCh37/hg19) Assembly</td>
+                    </tr>
+                    <tr>
+                        <th>Max Interval Width</th>
+                        <td>One megabase or 1000000 bases</td>
+                    </tr>
+                    <tr>
+                        <th>Chromosome Bounds</th>
+                        <td>Base positions should not exceed chromosome size bounds, they should also not be negative.</td>
+                    </tr>
+                </table>
+               
+            </li>
+            <li class="list-group-item">
+                <h4 style="color:#00008b;">Additional Features</h4>
+                <table class="table">
+                    <tr>
+                        <th>UCSC Genome Browser Connection</th>
+                        <td>If UCSC is the inputted source a toggle will appear below the search bar to allow for top # of overlapping files to be displayed in the UCSC Genome Track browser</td>
+                    </tr>
+
+                </table>
+
+            </li>
+          </ul>
+
+
     </div>
   </div>
-{% endif %}
-<!--
-<div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal">&times;</button>
-              <h2 class="modal-title"><font color="#7FCD79">Help</font></h2>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-4">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <script > $('#help').modal(show); </script> -->
-    </body>
-{% endblock %}
+  </div>
+  
+</body>
+  <script> 
+  function loading(){
+    // <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>
+        document.getElementById("gigglelogo").innerHTML = "<img src=\"../static/gigglelogo.gif\" width = \"175px\" style = \"padding-bottom: 0px;\" alt=\"Gi\"> <font color=\"#a4a5a6\" style = \"font-family:Times New Roman; \" >ggle</font>";
+        document.getElementById("searchform").style.display="none";;
+
+      }
+  
+  </script>
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</html>

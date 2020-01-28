@@ -1,170 +1,296 @@
-{% extends "base.html" %}
-{% import 'bootstrap/wtf.html' as wtf %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-{% block app_content %}
-<script  type="text/javascript">
-  function show(p){
-    var results = {{results|tojson}};
-    var newTable = "<table><tbody>", upperBound;
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
-    if (results.length > (p)*10) {
-      upperBound = (p)*10;
-    } else {
-      upperBound = results.length;
-    }
-
-    for (j = (p-1)*10 ; j < upperBound ; j++) {
-      newTable += "<tr><td>";
-      if (results[j][3] == "" && results[j][4] == "") {
-        newTable += "<h4> <font color=\"#144177\">" + results[j][0] + "</font> </h4> <h5><font color=\"#7fcdbb\"> Overlap: " + results[j][2] + "  -  Region Size: " + results[j][1] + " </font></h5>";
-      } else if (results[j][5] == "") {
-        newTable += "<h4> <font color=\"#144177\">" + results[j][3] + " : " + results[j][4] + "</font> </h4> <h5><font color=\"#7fcdbb\"> Overlap: " + results[j][2] + "  -  Region Size: " + results[j][1] + " - Table Name: " + results[j][0] + " </font></h5>";
-      } else {
-        newTable += "<h4><font color=\"#144177\">" + results[j][3] + " : " + results[j][4] + "</font> <a href=\"#\" data-toggle=\"modal\" data-target=\"#descriptionModal"+results[j][7]+"\"><i class=\"fa fa-edit\"></i> &#9432;</a></h4>";
-        newTable += "<h5><font color=\"#7fcdbb\"> Overlap: " + results[j][2] + "  -  Region Size: " + results[j][1] + " - Table Name: " + results[j][0] + " </font></h5>";
-        for(i = 0 ; i <= results[j][6].length - 5 ; i++) {
-          newTable += results[j][6][i];
-        }
-        newTable += "<a href=\"#\" data-toggle=\"modal\" data-target=\"#descriptionModal"+results[j][7]+"\"><i class=\"fa fa-edit\"></i> &#8690;</a></p>";
-      }
-      newTable += "</td></tr>";
-    }
-    newTable += "</table></tbody>";
-    paginate(p);
-    document.getElementById("resultTable").innerHTML = newTable;
-  }
-  function paginate(currentPage){
-    var res = {{results|tojson}};
-    var maxPage = Math.ceil(res.length/10);
-    var newPages = "<table><tr>";
-
-    if (currentPage == maxPage) {
-      document.getElementById("searchInfo").innerHTML = "<font color=\"#144177\">Showing Results "+parseInt((currentPage-1)*10)+"-"+parseInt(res.length)+"</font>";
-    } else {
-      document.getElementById("searchInfo").innerHTML = "<font color=\"#144177\">Showing Results "+parseInt((currentPage-1)*10)+"-"+parseInt(currentPage*10)+"</font>";
-    }
-    //Logic for pagination max 10 page links
-    //Once it gets to 5 it stays and drops previous
-    //current is 3: P 1 2 3 4 5 6 7 8 9 N
-    //current is 6: P 2 3 4 5 6 7 8 9 10 N
-    // always at least has 4 above it
-    
-    //If currentPage is 0 then add previous
-    if (currentPage != 1) {
-      newPages += "<td width = 100>";
-      newPages += "<a onclick = \"show(" + parseInt(currentPage-1) +")\" href=\"#\">";
-      newPages += "<table > <tr>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<</tr> <tr><h4>Previous</h4></tr> </table> </a> </td>";
-    }
-    //Add Gi
-    newPages += "<td width = 5> <table > <tr><font color=\"#7fcdbb\">Gi</font></tr> <tr><font color=\"white\"><h5>_</h5></font></tr> </table> </td>";
-
-    for (i = 1 ; i <= maxPage ; i++) {
-      if (currentPage != i) {
-        newPages += "<td width = 5><a onclick = \"show("+parseInt(i)+")\" href=\"#\"><table><tr><font color = \"#144177\">g</font></tr><tr><h5>&nbsp;"+i+"</h5></tr></table></a></td>";
-      } else {
-        newPages += "<td width = 5> <table> <tr><font color = \"#B12401\">g</font></tr> <tr><h5>&nbsp;"+i+"</h5></tr> </table></td>";
-      }
-    }
-    //if only 1 g then add another
-    if (maxPage == 1){
-      newPages += "<td width = 5> <table> <tr><font color = \"#144177\">g</font></tr> <tr><h5>&nbsp;</h5></tr> </table></td>";
-    }
-
-    //Adds gle
-    newPages += "<td width = 5><table ><tr><font color=\"#7fcdbb\">le</font></tr><tr><font color=\"white\"><h5>_</h5></font></tr></table><td width = 30> </td>";
-
-    //Add next if there is a next
-    if (currentPage < maxPage){
-      newPages += "<td> <a onclick = \"show("+parseInt(currentPage+1)+")\" href=\"#\"> <table> <tr>></tr> <tr><h4>Next</h4></tr> </table> </a></td> </tr>";
-    }
-    newPages += "</table>";
-    document.getElementById("paginationTable").innerHTML = newPages;
-  }
-
-</script>
-
-<form method="post">
-  <table>
-      <tr>
-      <th width = 150px> <H3 style=font-size:30px> <a href="/search"><img src="/static/gigglelogo.png" width = "50px" style = "padding-bottom: 0px;" alt="Gi"><font color = "#a4a5a6" style = "font-family:Times New Roman; ">ggle</font></a></H3> </th>
-      <th width = 600px> <input class="form-control form-control-lg form-control-borderless" type="search" name="Input"  placeholder="{{identifier[0]}} {{identifier[1]}}:{{identifier[2]}} from {{source}}"></H1> </th>
-      <th width = 25px></th>
-      <th width = 600px>   <h4> {{ form.submit(class="btn btn-md btn-primary") }}   </h4> </th>
-    </tr>
+    <title>Giggle Search</title>
+  </head>
+  <body onload="show(1);">
+<div id = "IntervalViz">
+<h7  >Current Intervals of interest:</h7>
+<table >
+        <tr>
+            <td>  
+            </td>
+            <td>
+              <div class="btn-group" id="IntervalVizDropdown">
+                  <button type="button" class="btn btn-primary btn-sm btn-block" >
+                    Chromosome
+                  </button>
+                  <button type="button" id="dropDownCurrentChr" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <!-- start with current chromosome -->
+                  </button>
+                  <div class="dropdown-menu" style="width: 30px;" id="dropDownChrs">
+                    <!-- <a class="dropdown-item" href="#">2</a> -->
+                  </div>
+                </div>
+            </td>
+            <td>
+              <div class="progress"  style="width:1000px;height: 32px;" id="intervalViz">
+                  <div class="progress-bar" role="progressbar" style="width:  20%;" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100"></div>
+                  <div class="progress-bar bg-success" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+                  <div class="progress-bar" role="progressbar" style="width: 20%" aria-valuenow="20" style="background-color:red; !important;" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+          </td>
+        </tr>
   </table>
-  {{ form.csrf_token }}       
-</form>
+</div>
 
 
-{% if "LenIntervals" in session and  session["LenIntervals"] > 1 %}
-  <div class="container">
-      <div class="row"> 
-        {% for intvset in session["intervals"] %}
-          <span class="col-sm-3">
-          <div class="progress">
-              <div class="progress-bar" role="progressbar" style="width:15%; background-color:rgb(20, 65, 119) !important;">  {{intvset[0][0]}} </div>
-                {% for intv in intvset %}
-                <div class="progress-bar" role="progressbar" style="width:0.2%; background-color:rgb(250, 250, 250) !important;"></div>
-                <a href="{{"/result/{}/{}:{}-{}".format(intv[3], intv[0], intv[1], intv[2])}}">
-                {% if intv[0] == identifier[0] and intv[1] == identifier[1] and intv[2] == identifier[2] %}
-                    <div class="progress-bar progress-bar-success" role="progressbar" style="width:30%; background-color:rgb(233, 78, 73) !important;"> {{intv[1]}}:{{intv[2]}} </div>
-                {% else %}
-                    <div class="progress-bar progress-bar-success" role="progressbar" style="width:30%; background-color:rgb(102, 159, 250) !important;"> {{intv[1]}}:{{intv[2]}} </div>
-                    {% endif %}
-                  </a>
-                {% endfor %}
+  <br>
+
+
+  <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
+      <div class="form-group row ">
+          <div class="col-sm-1"></div>
+          <div class="col-md-auto">
+              <H3 style=font-size:40px id="gigglelogo"> <a href="/search"><img src="/static/gigglelogo.png" width = "80px" style = "padding-bottom: 5px;" alt="Gi"><font color = "#a4a5a6" style = "font-family:Times New Roman; ">ggle</font></a></H3>
           </div>
-          </span>
-        {% endfor %}
+          <div class="col-md-5">
+          <br>
+            <input class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="{{identifier[0]}}:{{identifier[1]}}-{{identifier[2]}} from {{source}}">
+          </div>
+          <div class="col-md-2 ">
+              <br>
+              <div class="btn-group" id = "searchform">
+                  <button type="submit"class="btn btn-md btn-danger mb-2" onclick="loading();" aria-pressed="true">Search Overlapping intervals</button>
+                </div>
+            {{ form.csrf_token }}
+          </div>
       </div>
+  </form>
+
+  
+  <div class="container" id="mainpage">
+    
+    <div class = "row">
+    {% if source == "UCSC" %}
+      <div class="col-2"> <a class="btn btn-secondary btn-md" data-toggle="collapse" href="#UCSCLinkGeneration" role="button" aria-expanded="false" aria-controls="UCSCLinkGeneration">View in UCSC <br> Genome Browser</a></div>
+    {% endif %}
+      <div class="col">
+          <p> 
+              <font color="#144177">{{numresults}} overlapping regions found for {{identifier[0]}}:{{identifier[1]}}-{{identifier[2]}} from {{source}} data ({{'%0.2f'| format(searchtime|float)}} seconds)</font>
+              <div id ="searchInfo"><font color="#144177">Showing Results 0-10</font></div>
+          </p>
+      </div>
+    </div>
+
+  {% if source == "UCSC" %}
+    <div class = "row">
+    <div class = "col-8">
+      <div class="collapse" id="UCSCLinkGeneration">
+        <div class="card card-body">
+            <div class="container">
+              <div class="row">
+                <h8>Enter number of top overlapping files to display:</h8>
+              </div>
+              <div class="row">
+                <div class="col-3"> 1 </div>
+                <div class="col-7"></div>
+                <div class="col-2" style="display: flex; justify-content: flex-end"> {{numresults if (numresults < 150) else 150}} </div>
+              </div>
+
+              <div class="row">
+                <div class="col-12"> <input type="range" class="form-control-range" id="UCSCBrowser" class="input" min="1" max="{{numresults if (numresults<150) else 150}}" step="1" oninput="browserLink(value)"> </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-10"></div>
+                <div class="col-auto" style="display: flex; justify-content: flex-end" id="LinktoBrowser"></div>
+              </div>
+              
+          </div>
+        </div>
+      </div>
+    </div>
     </div>
   {% endif %}
 
-  
-  
-  <table>
-    <tr>
-      <th width = 900PX>
-        <h6><font color="#144177">{{numresults}} overlapping regions found for {{identifier[0]}} {{identifier[1]}}:{{identifier[2]}} from {{source}} data ({{searchtime}} seconds)</font></h6>
-        <h6 id="searchInfo"><font color="#144177">Showing Results 0-10</font></h6>
-      </th>
-    </tr>
-  </table>
+    <div class = "row justify-content-center">
+      <table class="table table-hover" id="resultTable"></table>
+    </div>
 
-    <table class="table table-hover" id="resultTable">
-    </table>
-          {% for value in allresults%}
-            {% if value[5] != "" %}
-              <div class="modal fade" id="descriptionModal{{value[7]}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h2 class="modal-title"><font color="#144177">{{ value[3] }} : {{value[4]}}</font></h2>
-                      </div>
-                      <div class="modal-body">
-                            {{ value[5] | safe}}
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                      </div>
-                    </div>
-                  </div>
+  </div>
+
+    {% for value in allresults%}
+      {% if value[5] != "" %}
+        <div class="modal fade" id="descriptionModal{{value[7]}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h2 class="modal-title"><font color="#144177">{{ value[3] }} : {{value[4]}}</font></h2>
+                  <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
-              {% endif %}
-            {% endfor %}
+                <div class="modal-body">
+                      {{ value[5] | safe}}
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %} 
+<div class="container">
+  <div class = "row justify-content-center">     
+    <center> 
+        <h1>
+            <table id="paginationTable">
+        </h1>
+    </center> 
+  </div>  
+</div> 
+
+</body>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script  type="text/javascript">
+      function loading(){
+      // <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>
+        document.getElementById("gigglelogo").innerHTML = "<a href=\"/search\"><img src=\"/static/gigglelogo.gif\" width = \"80px\" style = \"padding-bottom: 5px;\" alt=\"Gi\"><font color = \"#a4a5a6\" style = \"font-family:Times New Roman; \">ggle</font></a>";
+        document.getElementById("searchform").style.display="none";
+        document.getElementById("mainpage").style.display="none";
+        document.getElementById("IntervalViz").style.display="none";
+        document.getElementById("paginationTable").style.display="none";
+
+        document.getElementById("IntervalViz").style.display="none";
+
+      }
+      function browserLink(num){
+        var results = {{results|tojson}};
+        var source = {{source|tojson}};
+        var identifier = {{identifier|tojson}};
+        var link = "#";
+        if (source == "UCSC"){
+          link = "http://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&hideTracks=1"
+          link += "&position=" + identifier[0] + ":" + identifier[1] + "-" + identifier[2];
+          //Build link 
+          for (i=0; i<num; i++ ) {
+            link += "&" + results[i][0] +"=squish"
+          }
+        }
+        document.getElementById("LinktoBrowser").innerHTML = "<a class=\"btn btn-primary\" href="+link+">  View top "+num+" results in Genome "+source+" Browser</a>";
+      }
+    
+      function show(p){
+        var results = {{results|tojson}};
+        var newTable = "<table><tbody>", upperBound;
+    
+        if (results.length > (p)*10) {
+          upperBound = (p)*10;
+        } else {
+          upperBound = results.length;
+        }
+    
+        for (j = (p-1)*10 ; j < upperBound ; j++) {
+          newTable += "<tr><td>";
+          if (results[j][3] == "" && results[j][4] == "") {
+            newTable += "<h5> <font color=\"#144177\">" + results[j][0] + "</font> </h5> <h6><font color=\"#7fcdbb\"> Overlap: " + results[j][2] + "  -  Region Size: " + results[j][1] + " </font></h6>";
+          } else if (results[j][5] == "") {
+            newTable += "<h5> <font color=\"#144177\">" + results[j][3] + " : " + results[j][4] + "</font> </h5> <h6><font color=\"#7fcdbb\"> Overlap: " + results[j][2] + "  -  Region Size: " + results[j][1] + " - Table Name: " + results[j][0] + " </font></h6>";
+          } else {
+            newTable += "<h5><font color=\"#144177\">" + results[j][3] + " : " + results[j][4] + "</font> <a href=\"#\" data-toggle=\"modal\" data-target=\"#descriptionModal"+results[j][7]+"\"><i class=\"fa fa-edit\"></i> &#9432;</a></h5>";
+            newTable += "<h6><font color=\"#7fcdbb\"> Overlap: " + results[j][2] + "  -  Region Size: " + results[j][1] + " - Table Name: " + results[j][0] + " </font></h6>";
+            for(i = 0 ; i <= results[j][6].length - 5 ; i++) {
+              newTable += results[j][6][i];
+            }
+            newTable += "<a href=\"#\" data-toggle=\"modal\" data-target=\"#descriptionModal"+results[j][7]+"\"><i class=\"fa fa-edit\"></i> &#8690;</a></p>";
+          }
+          newTable += "</td></tr>";
+        }
+        newTable += "</table></tbody>";
+        paginate(p);
+        document.getElementById("resultTable").innerHTML = newTable;
+      }
+      function paginate(currentPage){
+        var res = {{results|tojson}};
+        var maxPage = Math.ceil(res.length/10);
+        var newPages = "<table><tr>";
+        var lowerBound=currentPage, upperBound=currentPage;
+    
+        if (currentPage == maxPage) {
+          document.getElementById("searchInfo").innerHTML = "<font color=\"#144177\">Showing Results "+parseInt((currentPage-1)*10)+"-"+parseInt(res.length)+"</font>";
+        } else {
+          document.getElementById("searchInfo").innerHTML = "<font color=\"#144177\">Showing Results "+parseInt((currentPage-1)*10)+"-"+parseInt(currentPage*10)+"</font>";
+        }
+        //Logic for pagination max 10 page links
+        //Once it gets to 5 it stays and drops previous
+        //current is 3: P 1 2 3 4 5 6 7 8 9 N
+        //current is 6: P 2 3 4 5 6 7 8 9 10 N
+        // always at least has 4 above it
+        
+        //If currentPage is 0 then add previous
+        if (currentPage != 1) {
+          newPages += "<td width = 100>";
+          newPages += "<a onclick = \"show(" + parseInt(currentPage-1) +")\" href=\"#\">";
+          newPages += "<table > <tr>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<</tr> <tr><h4>Previous</h4></tr> </table> </a> </td>";
+        }
+        //Add Gi
+        newPages += "<td width = 5> <table > <tr><font color=\"#7fcdbb\">Gi</font></tr> <tr><font color=\"white\"><h5>_</h5></font></tr> </table> </td>";
+        
+        if (currentPage < 5 && maxPage < 10){
+          lowerBound = 1;
+          upperBound = maxPage;
+        }else if (currentPage >= (maxPage-5)){
+          upperBound = maxPage;
+          lowerBound = maxPage-8;
+        }else if (currentPage < 5 && maxPage >= 10){
+          lowerBound = 1;
+          upperBound = 9;
+        } else {
+          lowerBound = currentPage-4;
+          upperBound = currentPage+4;
+        }
+
+        for (i = lowerBound ; i <= upperBound ; i++) {
+          if (currentPage != i) {
+            newPages += "<td width = 5><a onclick = \"show("+parseInt(i)+")\" href=\"#\"><table><tr><font color = \"#144177\">g</font></tr><tr><h5>&nbsp;"+i+"</h5></tr></table></a></td>";
+          } else {
+            newPages += "<td width = 5> <table> <tr><font color = \"#B12401\">g</font></tr> <tr><h5>&nbsp;"+i+"</h5></tr> </table></td>";
+          }
+        }
+        //if only 1 g then add another
+        if (maxPage == 1){
+          newPages += "<td width = 5> <table> <tr><font color = \"#144177\">g</font></tr> <tr><h5>&nbsp;</h5></tr> </table></td>";
+        }
+    
+        //Adds gle
+        newPages += "<td width = 5><table ><tr><font color=\"#7fcdbb\">le</font></tr><tr><font color=\"white\"><h5>_</h5></font></tr></table><td width = 30> </td>";
+    
+        //Add next if there is a next
+        if (currentPage < maxPage){
+          newPages += "<td> <a onclick = \"show("+parseInt(currentPage+1)+")\" href=\"#\"> <table> <tr>></tr> <tr><h4>Next</h4></tr> </table> </a></td> </tr>";
+        }
+        newPages += "</table>";
+        document.getElementById("paginationTable").innerHTML = newPages;
+      }
+    
+      function intervalBars(){
+        var intervals = {{sessionIntervals|tojson}};
+        var bars = "<div class= \"row\"><div class=\"col\"><div class=\"progress\" style=\"height: 30px;\"> ";
+        if (intervals.length > 1){
+          for (i = 0 ; i < intervals.length; i++) {
+            if (i==0|| intervals[i][0].localeCompare(intervals[i-1][0]) ){
+    
+              bars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:40px; background-color:rgb(177, 36, 1) !important;\">" + intervals[i][0] + "</div>";
+            }
+            bars += "<div class=\"progress-bar progress-bar-success\" role=\"progressbar\" style=\"width:2px; background-color:rgb(250, 250, 250) !important;\"></div> </a>";
+            bars += "<a href=\""+"/result/"+intervals[i][3]+"/"+intervals[i][0]+":"+intervals[i][1]+"-"+intervals[i][2]+"\">";
+            bars += "<div class=\"progress-bar progress-bar-success\" role=\"progressbar\" style=\"width:"+parseInt((intervals[i][1].toString().length+intervals[i][2].toString().length)*12)+"px;background-color:rgb(20, 65, 119) !important;\">" + intervals[i][1] + ":" + intervals[i][2] + "</div> </a>";
             
-            <center> 
-                <h1>
-                    <table id="paginationTable">
-                     
-                        </table>
+          }
+        }
+        document.getElementById("multipleInterval").innerHTML = bars+"</div></div></div>";
+      }
     
-    
-                      </h1>
-                    </center> 
-
-
-                    <center> 
-                <body onload="show(1);"/>
-{% endblock %}
+    </script>
+</html>

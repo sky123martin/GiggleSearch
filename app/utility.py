@@ -11,44 +11,89 @@ import math
 import requests
 import re
 
+chrBound = {
+        "chr1":249000000,
+        "chr2":242000000,
+        "chr3":198000000,
+        "chr4":186000000,
+        "chr5":181000000,
+        "chr6":170000000,
+        "chr7":159000000,
+        "chr8":146000000,
+        "chr9":141000000,
+        "chr10":133000000,
+        "chr11":135000000,
+        "chr12":134000000,
+        "chr13":115000000,
+        "chr14":107000000,
+        "chr15":102000000,
+        "chr16":90000000,
+        "chr17":83000000,
+        "chr18":78000000,
+        "chr19":59000000,
+        "chr20":63000000,
+        "chr21":48000000,
+        "chr22":49000000
+    }
+validSources = ["UCSC"]
+maxIntervals = 20
+maxIntervalSize = 1000000
 
 class userInput:
+
     def parseManualSearch(self, Input):
-        ExtractedNumbers = re.findall('[0-9]{1,2}[ \t]*[0-9]{1,100}[ \t]*[:]*[ \t]*[0-9]{1,100}', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
-        Source = re.findall('[A-Za-z]{3,4}$', Input, flags = re.IGNORECASE | re.LOCALE | re.MULTILINE)
-        if ExtractedNumbers != None and Source != None:
-            print("Intervals Entered:",ExtractedNumbers)
-            print("Source Entered:",Source)
-            intervals = []
-            for x in ExtractedNumbers:
-                out = re.findall('[0-9]{1,100}', x)
-                out.append(Source[0])
-                out[0] = "chr" + out[0]
-                if out != None:
-                    intervals.append(out)
 
-            if len(intervals)>1:
-                intervals.sort(key = lambda x : (x[0], x[1]))
-                print("Intervals:", intervals)
-                sortedintv = []
-                temp = [intervals[0]]
-                for i in range(1,len(intervals)):
-                    if intervals[i-1][0] != intervals[i][0]:
-                        sortedintv.append(temp)
-                        temp = []
-                    temp.append(intervals[i])
-                if temp != []:
-                    sortedintv.append(temp)
-                session['intervals'] = sortedintv
-                session["LenIntervals"] = len(intervals)
-            else:
-                session['intervals'] = intervals
-                session["LenIntervals"] = len(intervals)
+    #     Input = "chr1 100 : 2000 chr2 100 : 2000 chr3 100 : 2000 chr1 1030 : 2000 from UCSC"
+    #     Out = [[u'chr1', u'100', u'2000', u'UCSC'], [u'chr2', u'100', u'2000', u'UCSC'], [u'chr3', u'100', u'2000', u'UCSC'], [u'chr1', u'1030', u'2000', u'UCSC']])
+        currentChromosome = ""
+        intervals = []
+        source = str(Input.split()[-1].upper())
+        currentInterval = []
+        
+        if source not in validSources:
+            return "\"{}\" not a valid source.".format(source)
+        
+        try:
+            for i in re.split('\W+',Input):
+                if len(intervals)>maxIntervals:
+                    break
+                if i[0:3].lower() == "chr":
+                    if currentInterval == []:
+                        currentInterval.append(str(i))
+                    else:
+                        return "Uncomplete interval detected in input."
 
-            return intervals, Source
-        else:
-            print("Parser Error: No Match Found")
-        return "Parser Error: No Match Found for input " + Input
+                elif i.isdigit():
+                    if len(currentInterval) == 0: #digit without chr 
+                        if len(intervals) != 0:
+                            currentInterval = [intervals[-1][0],int(i)]
+                        else:
+                            return "Interval entered without a chromosome specified."
+                    elif len(currentInterval) == 1: # lower bound
+                        currentInterval.append(int(i))
+                    elif len(currentInterval) == 2: # chr lower and upper now complete
+                        currentInterval.append(int(i))
+                        currentInterval.append(source)
+                        #check bounding
+                        if int(currentInterval[1]) > int(currentInterval[2]):
+                            return "Interval found with lower bound greater than upper bound."
+                        elif chrBound[currentInterval[0]] < int(currentInterval[1]):
+                            return "Lower bound out of chromosome range."
+                        elif chrBound[currentInterval[0]] < int(currentInterval[2]):
+                            return "Upper bound out of chromosome range(upper bound for {} is {}).".format(currentInterval[0],chrBound[currentInterval[0]])
+                        elif int(currentInterval[2])-int(currentInterval[1])>maxIntervalSize:
+                            return "Max interval size that can be proccessed is {}, try file input for larger intervals.".format(maxIntervalSize)
+                        elif currentInterval not in intervals:
+                            intervals.append(currentInterval)
+                            currentInterval = []
+            if len(intervals)==0:
+                return "No valid intervals entered."
+            intervals.sort(key = lambda x : (x[0], x[1]))
+            session['intervals'] = intervals
+            session["LenIntervals"] = len(intervals)
+            return intervals
+        except:
+            return "Incorrect input formatting."
 
 class giggle:
     def __init__(self):
