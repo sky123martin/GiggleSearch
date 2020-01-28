@@ -58,68 +58,71 @@ def errorHandling(errorCode, errorMessage):
 
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
 def result(source, region, lowerBound, upperBound):
-    # Definition of forms:
-    form = Search()
-    print("Result recieved:", session.get('intervals', None))
-    print("#")
-    identifier = [region, lowerBound, upperBound]
+    try:
+        # Definition of forms:
+        form = Search()
+        print("Result recieved:", session.get('intervals', None))
+        print("#")
+        identifier = [region, lowerBound, upperBound]
 
-    if form.validate_on_submit():
-        out = parse.parseManualSearch(form.Input.data)
-        if isinstance(out, str): # parsing error occured
-            return render_template('home.html', form = form, inputtype=inputtype, error=out)
+        if form.validate_on_submit():
+            out = parse.parseManualSearch(form.Input.data)
+            if isinstance(out, str): # parsing error occured
+                return render_template('home.html', form = form, inputtype="manual", error=out)
+            else:
+                return redirect("/result/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
+
+        print("INITIATING SEARCH")
+        start_total = time.time()
+        start_task = time.time()
+
+        overlap = search.single_overlap([region, lowerBound, upperBound, source.lower()])
+
+        overlap.sort(key = lambda ele : ele[2], reverse = 1)
+
+        end_task = time.time()
+        print("#####")
+        print("FILTERING FOR SPECIFIED CONSTRAINTS ({} seconds)".format(end_task - start_task))
+        #Pagination
+        # determining results displayed on current page
+        
+        page = 1
+        maxpage = int(math.ceil(len(overlap)/10.0))
+        if page < 7 or maxpage < 10:
+            if maxpage < 10:
+                pageNums = list(range(1, maxpage + 1))
+            else:
+                pageNums = list(range(1, 11))
         else:
-            return redirect("/result/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
+            if maxpage < (page + 4):
+                pageNums = list(range(page-5, maxpage + 1))
+            else:
+                pageNums = list(range(page-5, page + 5))
+        currentpage = overlap[(page*10-10):(page*10)]
+        print("Pagination",pageNums, page, maxpage)
+        # make array of links for pages
+        start_task = time.time()
+        overlap = getDataInfo(overlap, source) #generic function to handle data information gathering
+        end_task = time.time()
+        print("########")
+        print("DATA SOURCE INFOMATION COLLECTED ({} seconds)".format(end_task - start_task))
 
-    print("INITIATING SEARCH")
-    start_total = time.time()
-    start_task = time.time()
+        currentpage = overlap[(page*10-10):(page*10)]
 
-    overlap = search.single_overlap([region, lowerBound, upperBound, source.lower()])
-
-    overlap.sort(key = lambda ele : ele[2], reverse = 1)
-
-    end_task = time.time()
-    print("#####")
-    print("FILTERING FOR SPECIFIED CONSTRAINTS ({} seconds)".format(end_task - start_task))
-    #Pagination
-    # determining results displayed on current page
-    
-    page = 1
-    maxpage = int(math.ceil(len(overlap)/10.0))
-    if page < 7 or maxpage < 10:
-        if maxpage < 10:
-            pageNums = list(range(1, maxpage + 1))
-        else:
-            pageNums = list(range(1, 11))
-    else:
-        if maxpage < (page + 4):
-            pageNums = list(range(page-5, maxpage + 1))
-        else:
-            pageNums = list(range(page-5, page + 5))
-    currentpage = overlap[(page*10-10):(page*10)]
-    print("Pagination",pageNums, page, maxpage)
-    # make array of links for pages
-    start_task = time.time()
-    overlap = getDataInfo(overlap, source) #generic function to handle data information gathering
-    end_task = time.time()
-    print("########")
-    print("DATA SOURCE INFOMATION COLLECTED ({} seconds)".format(end_task - start_task))
-
-    currentpage = overlap[(page*10-10):(page*10)]
-
-    end_total = time.time()
-    print("##########")
-    print("TOTAL SEARCH TIME ELAPSED {}".format(end_total - start_total))
-    print("####################")
-    print("RENDERING RESULTS {}-{}".format(page*10-10,page*10))
-    print("########################################")
-    # [0 filename, 1 total region, 2 overlap, 3 short name, 4 long name, 5 description, 6 short description, 7 ID]
-    i = 1
-    for name in overlap:
-        name.append(i)
-        i = i +1
-    return render_template('result.html', form = form, results = overlap, allresults = overlap, searchtime = end_total - start_total, sessionIntervals= session['intervals'], numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
+        end_total = time.time()
+        print("##########")
+        print("TOTAL SEARCH TIME ELAPSED {}".format(end_total - start_total))
+        print("####################")
+        print("RENDERING RESULTS {}-{}".format(page*10-10,page*10))
+        print("########################################")
+        # [0 filename, 1 total region, 2 overlap, 3 short name, 4 long name, 5 description, 6 short description, 7 ID]
+        i = 1
+        for name in overlap:
+            name.append(i)
+            i = i +1
+        return render_template('result.html', form = form, results = overlap, allresults = overlap, searchtime = end_total - start_total, sessionIntervals= session['intervals'], numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
+    except:
+        return render_template('home.html', form = form, inputtype="manual", error="Unexpected error found, try again.")
 
 def getDataInfo(data, source):
     if source == "UCSC" or source == "ucsc":

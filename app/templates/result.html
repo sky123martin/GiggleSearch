@@ -10,74 +10,60 @@
 
     <title>Giggle Search</title>
   </head>
-  <body onload="show(1);">
-<div id = "IntervalViz">
-<h7  >Current Intervals of interest:</h7>
-<table >
-        <tr>
-            <td>  
-            </td>
-            <td>
-              <div class="btn-group" id="IntervalVizDropdown">
-                  <button type="button" class="btn btn-primary btn-sm btn-block" >
-                    Chromosome
-                  </button>
-                  <button type="button" id="dropDownCurrentChr" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <!-- start with current chromosome -->
-                  </button>
-                  <div class="dropdown-menu" style="width: 30px;" id="dropDownChrs">
-                    <!-- <a class="dropdown-item" href="#">2</a> -->
-                  </div>
-                </div>
-            </td>
-            <td>
-              <div class="progress"  style="width:1000px;height: 32px;" id="intervalViz">
-                  <div class="progress-bar" role="progressbar" style="width:  20%;" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100"></div>
-                  <div class="progress-bar bg-success" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
-                  <div class="progress-bar" role="progressbar" style="width: 20%" aria-valuenow="20" style="background-color:red; !important;" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-          </td>
-        </tr>
-  </table>
-</div>
-
-
-  <br>
-
-
-  <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
+  <body onload="show(1);displayIntervals();">
+    
+    <br>
+    
+    
+    <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
       <div class="form-group row ">
-          <div class="col-sm-1"></div>
-          <div class="col-md-auto">
-              <H3 style=font-size:40px id="gigglelogo"> <a href="/search"><img src="/static/gigglelogo.png" width = "80px" style = "padding-bottom: 5px;" alt="Gi"><font color = "#a4a5a6" style = "font-family:Times New Roman; ">ggle</font></a></H3>
-          </div>
+        <div class="col-sm-1"></div>
+        <div class="col-md-auto">
+          <H3 style=font-size:40px id="gigglelogo"> <a href="/search"><img src="/static/gigglelogo.png" width = "80px" style = "padding-bottom: 5px;" alt="Gi"><font color = "#a4a5a6" style = "font-family:Times New Roman; ">ggle</font></a></H3>
+        </div>
           <div class="col-md-5">
-          <br>
+            <br>
             <input class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="{{identifier[0]}}:{{identifier[1]}}-{{identifier[2]}} from {{source}}">
           </div>
           <div class="col-md-2 ">
-              <br>
-              <div class="btn-group" id = "searchform">
-                  <button type="submit"class="btn btn-md btn-danger mb-2" onclick="loading();" aria-pressed="true">Search Overlapping intervals</button>
-                </div>
+            <br>
+            <div class="btn-group" id = "searchform">
+              <button type="submit"class="btn btn-md btn-danger mb-2" onclick="loading();" aria-pressed="true">Search Overlapping intervals</button>
+            </div>
             {{ form.csrf_token }}
           </div>
       </div>
-  </form>
-
+    </form>
+  
   
   <div class="container" id="mainpage">
     
     <div class = "row">
     {% if source == "UCSC" %}
-      <div class="col-2"> <a class="btn btn-secondary btn-md" data-toggle="collapse" href="#UCSCLinkGeneration" role="button" aria-expanded="false" aria-controls="UCSCLinkGeneration">View in UCSC <br> Genome Browser</a></div>
+      <div class="col-2"> <a class="btn btn-secondary btn-sm" data-toggle="collapse" href="#UCSCLinkGeneration" role="button" aria-expanded="false" aria-controls="UCSCLinkGeneration" >View Interval in UCSC<br> Genome Browser</a></div>
     {% endif %}
-      <div class="col">
-          <p> 
-              <font color="#144177">{{numresults}} overlapping regions found for {{identifier[0]}}:{{identifier[1]}}-{{identifier[2]}} from {{source}} data ({{'%0.2f'| format(searchtime|float)}} seconds)</font>
-              <div id ="searchInfo"><font color="#144177">Showing Results 0-10</font></div>
-          </p>
-      </div>
+    <div class="col">
+        <table >
+                <tr>
+                    <td>  
+                    </td>
+                    <td>
+                      <div class="btn-group" id="IntervalVizDropdown">
+                          <button type="button" id="dropDownCurrentChr" class="btn btn-secondary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+  
+                          </button>
+                          <div class="dropdown-menu" style="width: 30px;" id="dropDownChrs">
+                          </div>
+                        </div>
+                    </td>
+                    <td>
+                      <div class="progress"  style="width:700px;height: 32px;" id="intervalViz">
+                      </div>
+                  </td>
+                </tr>
+          </table>
+
+    </div>
     </div>
 
   {% if source == "UCSC" %}
@@ -110,7 +96,9 @@
     </div>
     </div>
   {% endif %}
-
+  <p> 
+      <font color="#144177"> <div id ="searchInfo"></div></font>
+  </p>
     <div class = "row justify-content-center">
       <table class="table table-hover" id="resultTable"></table>
     </div>
@@ -137,7 +125,7 @@
           </div>
         {% endif %}
       {% endfor %} 
-<div class="container">
+<div class="container" id="pages">
   <div class = "row justify-content-center">     
     <center> 
         <h1>
@@ -157,14 +145,59 @@
       function loading(){
       // <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>
         document.getElementById("gigglelogo").innerHTML = "<a href=\"/search\"><img src=\"/static/gigglelogo.gif\" width = \"80px\" style = \"padding-bottom: 5px;\" alt=\"Gi\"><font color = \"#a4a5a6\" style = \"font-family:Times New Roman; \">ggle</font></a>";
+        document.getElementById("pages").style.display="none";
         document.getElementById("searchform").style.display="none";
         document.getElementById("mainpage").style.display="none";
-        document.getElementById("IntervalViz").style.display="none";
         document.getElementById("paginationTable").style.display="none";
+        
 
         document.getElementById("IntervalViz").style.display="none";
 
       }
+      function displayIntervals(chromosome="None") {
+        var intervals = {{sessionIntervals|tojson}};
+        var currentIntv = {{identifier|tojson}};
+        var chrdropdown = "";
+        var intervalBars = "";
+        
+        if (chromosome == "None"){
+          chromosome = currentIntv[0];
+        }
+        var listedIntv = [chromosome];
+
+        if (intervals.length > 1){ 
+          //"{{identifier[0]}}:{{identifier[1]}}-{{identifier[2]}} from {{source}}"
+          //fill in chromosome dropdown
+          for (i = 0 ; i < intervals.length; i++) {
+            if (!listedIntv.includes(intervals[i][0])){
+            chrdropdown += "<a class=\"dropdown-item\" onclick=\"displayIntervals('"+intervals[i][0]+"');\">"+intervals[i][0]+"</a>";
+            listedIntv.push(intervals[i][0]);
+            }
+          }
+          document.getElementById("dropDownChrs").innerHTML = chrdropdown;
+          document.getElementById("dropDownCurrentChr").innerHTML = chromosome;
+          for (i = 0 ; i < intervals.length; i++) {
+            if (intervals[i][1]== currentIntv[1] && intervals[i][2]== currentIntv[2] && intervals[i][0]==currentIntv[0]){
+              intervalBars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:  20%; background-color:#144177 !important;\" aria-valuenow=\"15\" aria-valuemin=\"0\" aria-valuemax=\"100\">"+intervals[i][1]+":"+intervals[i][2]+"</div>";
+              intervalBars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:  2%; background-color:rgba(255, 0, 0,0) !important;\" aria-valuenow=\"15\" aria-valuemin=\"0\" aria-valuemax=\"100\"></div>";
+            }else if (chromosome == intervals[i][0]){
+              intervalBars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:  20%; background-color:grey !important;\" aria-valuenow=\"15\" aria-valuemin=\"0\" aria-valuemax=\"100\">"+intervals[i][1]+":"+intervals[i][2]+"</div>";
+              intervalBars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:  2%; background-color:rgba(255, 0, 0,0) !important;\" aria-valuenow=\"15\" aria-valuemin=\"0\" aria-valuemax=\"100\"></div>";
+            }
+
+          }
+          document.getElementById("intervalViz").innerHTML = intervalBars;
+          
+        }else{
+          document.getElementById("IntervalVizDropdown").style.display = "none";
+          document.getElementById("dropDownCurrentChr").style.display = "none";
+          document.getElementById("dropDownChrs").style.display = "none";
+          document.getElementById("intervalViz").style.display = "none";
+
+
+        }
+      }
+
       function browserLink(num){
         var results = {{results|tojson}};
         var source = {{source|tojson}};
@@ -218,9 +251,9 @@
         var lowerBound=currentPage, upperBound=currentPage;
     
         if (currentPage == maxPage) {
-          document.getElementById("searchInfo").innerHTML = "<font color=\"#144177\">Showing Results "+parseInt((currentPage-1)*10)+"-"+parseInt(res.length)+"</font>";
+          document.getElementById("searchInfo").innerHTML = "<div id =\"searchInfo\"> About {{numresults}} overlapping regions ({{'%0.2f'| format(searchtime|float)}} seconds) - "+parseInt((currentPage-1)*10)+"-"+parseInt(res.length)+" Displayed </div> ";
         } else {
-          document.getElementById("searchInfo").innerHTML = "<font color=\"#144177\">Showing Results "+parseInt((currentPage-1)*10)+"-"+parseInt(currentPage*10)+"</font>";
+          document.getElementById("searchInfo").innerHTML = "<div id =\"searchInfo\"> About {{numresults}} overlapping regions ({{'%0.2f'| format(searchtime|float)}} seconds) <br> "+parseInt((currentPage-1)*10)+"-"+parseInt(currentPage*10)+" Displayed </div> ";
         }
         //Logic for pagination max 10 page links
         //Once it gets to 5 it stays and drops previous
