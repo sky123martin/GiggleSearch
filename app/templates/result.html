@@ -14,7 +14,6 @@
     
     <br>
     
-    
     <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
       <div class="form-group row ">
         <div class="col-sm-1"></div>
@@ -273,7 +272,7 @@
         //If currentPage is 0 then add previous
         if (currentPage != 1) {
           newPages += "<td width = 100>";
-          newPages += "<a onclick = \"show(" + parseInt(currentPage-1) +")\" href=\"#\">";
+          newPages += "<a onclick = \"show(" + parseInt(currentPage-1) + ")\" href=\"#\">";
           newPages += "<table > <tr>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<</tr> <tr><h4>Previous</h4></tr> </table> </a> </td>";
         }
         //Add Gi
