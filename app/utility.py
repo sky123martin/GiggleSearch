@@ -61,7 +61,7 @@ class userInput:
                     if currentInterval == []:
                         currentInterval.append(str(i))
                     else:
-                        return "Uncomplete interval detected in input."
+                        return "Incomplete interval detected in input."
 
                 elif i.isdigit():
                     if len(currentInterval) == 0: #digit without chr 

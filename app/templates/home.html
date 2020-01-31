@@ -19,55 +19,67 @@
         <br></br>
       </div>
 
-<!-- {% if inputtype == "file" %}
-  <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8">
-          <form method="post" enctype="multipart/form-data">
-            <div class="row justify-content-center">
-            <div class="col-auto">
-          <div class="card-body row no-gutters align-items-center">
-            <form method="POST" enctype="multipart/form-data">
-              {{ form.hidden_tag() }}
-              {{ form.file }}
-              <input type="submit">
-            </form>
-            <a href="/search/manual"><button class="btn btn-lg btn-primary" type="button"> Switch to Manual Search</button></a>
-          </div>
-          </div>
-          </div>
-          </form>
-        </div>
-      </div>
+{% if inputtype == "file" %}
+
+    {% if error != "" %}
+    <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post">
+    {% else %} 
+    <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
+    {% endif %}
+    <div class="form-group row justify-content-md-center">
+        <div class="col col-md-4">
+            <input type="file" class="custom-file-input" id="validatedFile" required>
+            <label class="custom-file-label" for="validatedFile">Choose interval file...</label>
+          <div class="invalid-feedback">Example invalid custom file feedback</div>
+      </div> 
     </div>
-{% endif %} -->
-  <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
-      <div class="form-group row justify-content-md-center">
-          <div class="col col-md-6">
-            <input class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="chr<#>: <lower> - <upper> , (additional intervals...)  from <source>">
-          </div>
+    <div class="form-group row justify-content-md-center">
+        <div class="col-md-auto">
+            <div class="btn-group" id = "searchform">
+                <button type="submit" onclick="loading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
+                <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                    &#9432;</button>
+              </div>
+          {{ form.csrf_token }}
         </div>
-        {% if error != None %}
-        <div class="row justify-content-center">
-            <div class="alert alert-danger" role="alert">
-                {{error}} Click help icon for formatting rules and examples.
+    </div>
+       
+    </form>
+  {% else %}
+
+    {% if error != "" %}
+      <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post">
+    {% else %} 
+      <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
+    {% endif %}
+
+        <div class="form-group row justify-content-md-center">
+            <div class="col col-md-6">
+              
+              {% if error != "" %}
+              <input id="manualIntervalInput" class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="chr<#>: <lower> - <upper> , (additional intervals...)  from <source>" required>
+              <div class="invalid-feedback">{{error}} (click help icon for formatting rules)</div>
+              {% else %} 
+              <input id="manualIntervalInput" class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="chr<#>: <lower> - <upper> , (additional intervals...)  from <source>">
+              {% endif %}
+            </div>
+          </div>
+
+
+          <div class="form-group row justify-content-md-center">
+            <div class="col-md-auto">
+                <div class="btn-group" id = "searchform">
+                    <button type="submit" onclick="loading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
+                    <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                        &#9432;</button>
+                  </div>
+              {{ form.csrf_token }}
             </div>
         </div>
-        {% endif %}
-        <div class="form-group row justify-content-md-center">
-          <div class="col-md-auto">
-              <div class="btn-group" id = "searchform">
-                  <button type="submit" onclick="loading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
-                  <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                      &#9432;</button>
-                </div>
-            {{ form.csrf_token }}
-          </div>
-      </div>
-  </form>
+    </form>
 
-  </div>
-  
+    </div>
+  {% endif %}
 
   <div class="collapse justify-content-center" id="collapseExample">
       <div class="row justify-content-center">

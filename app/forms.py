@@ -14,9 +14,9 @@ class Search(FlaskForm):
 #                                                 ('1','Total Regions'), ('3','% Overlapping')])
 #     submit = SubmitField('Refine')
 
-# class UploadForm(FlaskForm):
-#     file = FileField()
-#     submit = SubmitField('Search')
+class uploadForm(FlaskForm):
+    file = FileField()
+    submit = SubmitField('Search')
 
 # class FileUploadForm(FlaskForm):
 #     file = FileField(validators=[FileRequired(), FileAllowed(['bed','bed.gz'], 'Bed files only!')])

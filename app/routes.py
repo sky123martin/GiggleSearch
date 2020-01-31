@@ -1,7 +1,7 @@
 from __future__ import print_function
 from flask import Flask, render_template, flash, request, redirect
 from app import app
-from app.forms import Search
+from app.forms import Search, uploadForm
 from bs4 import BeautifulSoup as bs
 from flask_wtf import Form
 from flask_wtf.file import FileField
@@ -25,6 +25,7 @@ parse = userInput()
 search = giggle()
 
 @app.route('/', methods=['GET', 'POST'])
+@app.route('/<inputtype>', methods=['GET', 'POST'])
 @app.route('/search', methods=['GET', 'POST'])
 @app.route('/search/<inputtype>', methods=['GET', 'POST'])
 def home(inputtype = None, error = None):
@@ -38,18 +39,18 @@ def home(inputtype = None, error = None):
             if isinstance(out, str): # parsing error occured
                 return render_template('home.html', form = form, inputtype=inputtype, error=out)
             else:
-                return redirect("/result/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
-    # else:
-    #     inputtype = "file"
-    #     form = FileUploadForm(CombinedMultiDict((request.files, request.form)))
-    #     if form.validate_on_submit():
-    #         f = form.file.data
-    #         filename = secure_filename(f.filename)
-    #         print("File Uploaded:", filename)
-    #         print(f)
-
+                return redirect("/result/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))        
+    elif inputtype == "file":
+        form = uploadForm(CombinedMultiDict((request.files, request.form)))
+        if form.validate_on_submit():
+            f = form.file.data
+            filename = secure_filename(f.filename)
+            print("File Uploaded:", filename)
+    else:
+        return render_template('home.html', form = Search(), inputtype=inputtype, error="Unknown input type")
+    
     print("Current Input Type: ", inputtype)
-    return render_template('home.html', form = form, inputtype=inputtype, error = None)
+    return render_template('home.html', form = form, inputtype=inputtype, error = "")
 
 @app.route("/error", methods=['GET', 'POST'])
 def errorHandling(errorCode, errorMessage):
