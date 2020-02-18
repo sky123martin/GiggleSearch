@@ -25,9 +25,9 @@ parse = userInput()
 search = giggle()
 
 @app.route('/', methods=['GET', 'POST'])
-@app.route('/<inputtype>', methods=['GET', 'POST'])
 @app.route('/search', methods=['GET', 'POST'])
-@app.route('/search/<inputtype>', methods=['GET', 'POST'])
+@app.route('/search/inputtype:<string:inputtype>', methods=['GET', 'POST'])
+@app.route('/inputtype:<string:inputtype>', methods=['GET', 'POST'])
 def home(inputtype = None, error = None):
 
     if inputtype == None or inputtype == "manual":
@@ -39,27 +39,25 @@ def home(inputtype = None, error = None):
             if isinstance(out, str): # parsing error occured
                 return render_template('home.html', form = form, inputtype=inputtype, error=out)
             else:
-                return redirect("/result/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))        
+                return redirect("/search/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))   
+
     elif inputtype == "file":
         form = uploadForm(CombinedMultiDict((request.files, request.form)))
         if form.validate_on_submit():
             f = form.file.data
             filename = secure_filename(f.filename)
             print("File Uploaded:", filename)
+
     else:
-        return render_template('home.html', form = Search(), inputtype=inputtype, error="Unknown input type")
+        return errorHandling("inputtype:"+inputtype)
     
     print("Current Input Type: ", inputtype)
     return render_template('home.html', form = form, inputtype=inputtype, error = "")
 
-@app.route("/error", methods=['GET', 'POST'])
-def errorHandling(errorCode, errorMessage):
-    return render_template('404.html')
-
-@app.route("/result/<source>/<fileName>", methods=['GET', 'POST'])
+@app.route("/search/<source>/<fileName>", methods=['GET', 'POST'])
 def fileResult(source, fileName):
     c = 99
-@app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
+@app.route("/search/<string:source>/<string:region>:<int:lowerBound>-<int:upperBound>", methods=['GET', 'POST'])
 def result(source, region, lowerBound, upperBound):
     try:
         # Definition of forms:
@@ -73,13 +71,13 @@ def result(source, region, lowerBound, upperBound):
             if isinstance(out, str): # parsing error occured
                 return render_template('home.html', form = form, inputtype="manual", error=out)
             else:
-                return redirect("/result/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
+                return redirect("/search?{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
 
         print("INITIATING SEARCH")
         start_total = time.time()
         start_task = time.time()
 
-        overlap = search.single_overlap([region, lowerBound, upperBound, source.lower()])
+        overlap = search.singleOverlap([region, lowerBound, upperBound, source.lower()])
 
         overlap.sort(key = lambda ele : ele[2], reverse = 1)
 
@@ -123,9 +121,14 @@ def result(source, region, lowerBound, upperBound):
         for name in overlap:
             name.append(i)
             i = i +1
-        return render_template('result.html', form = form, results = overlap, allresults = overlap, searchtime = end_total - start_total, sessionIntervals= session['intervals'], numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
+        return render_template('manualResult.html', form = form, results = overlap, allresults = overlap, searchtime = end_total - start_total, sessionIntervals= session['intervals'], numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
     except:
         return render_template('home.html', form = form, inputtype="manual", error="Unexpected error found, try again.")
+
+@app.route("/<path:utterNoneSense>", methods=['GET', 'POST'])
+@app.route("/error", methods=['GET', 'POST'])
+def errorHandling(utterNoneSense):
+    return render_template('404.html',utterNoneSense=utterNoneSense)
 
 def getDataInfo(data, source):
     if source == "UCSC" or source == "ucsc":
