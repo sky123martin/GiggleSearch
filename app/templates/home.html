@@ -2,7 +2,7 @@
 <html>
 
 <head>
-        <!-- Required meta tags -->
+    <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Giggle Search</title>
@@ -19,28 +19,6 @@
         <br></br>
       </div>
 
-<!-- {% if inputtype == "file" %}
-  <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8">
-          <form method="post" enctype="multipart/form-data">
-            <div class="row justify-content-center">
-            <div class="col-auto">
-          <div class="card-body row no-gutters align-items-center">
-            <form method="POST" enctype="multipart/form-data">
-              {{ form.hidden_tag() }}
-              {{ form.file }}
-              <input type="submit">
-            </form>
-            <a href="/search/manual"><button class="btn btn-lg btn-primary" type="button"> Switch to Manual Search</button></a>
-          </div>
-          </div>
-          </div>
-          </form>
-        </div>
-      </div>
-    </div>
-{% endif %} -->
   <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
       <div class="form-group row justify-content-md-center">
           <div class="col col-md-6">
@@ -58,7 +36,7 @@
           <div class="col-md-auto">
               <div class="btn-group" id = "searchform">
                   <button type="submit" onclick="loading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
-                  <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                  <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" aria-controls="collapseExample">
                       &#9432;</button>
                 </div>
             {{ form.csrf_token }}
@@ -69,7 +47,7 @@
   </div>
   
 
-  <div class="collapse justify-content-center" id="collapseExample">
+  <div class="collapse justify-content-center" id="help">
       <div class="row justify-content-center">
     <div class="card card-body col-9">
         <ul class="list-group list-group-flush">
@@ -175,10 +153,9 @@
 </body>
   <script> 
   function loading(){
-    // <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>
         document.getElementById("gigglelogo").innerHTML = "<img src=\"../static/gigglelogo.gif\" width = \"175px\" style = \"padding-bottom: 0px;\" alt=\"Gi\"> <font color=\"#a4a5a6\" style = \"font-family:Times New Roman; \" >ggle</font>";
-        document.getElementById("searchform").style.display="none";;
-
+        document.getElementById("searchform").style.display="none";
+        document.getElementById("help").style.display="none";
       }
   
   </script>

@@ -1,7 +1,6 @@
 asn1crypto==0.24.0
 backports.functools-lru-cache==1.5
 bandit==1.6.0
-BeautifulSoup==3.2.1
 beautifulsoup4==4.7.1
 bs4==0.0.1
 certifi==2019.3.9
