@@ -56,7 +56,9 @@ def home(inputtype = None, error = None):
 def errorHandling(errorCode, errorMessage):
     return render_template('404.html')
 
-
+@app.route("/result/<source>/<fileName>", methods=['GET', 'POST'])
+def fileResult(source, fileName):
+    c = 99
 @app.route("/result/<source>/<region>:<lowerBound>-<upperBound>", methods=['GET', 'POST'])
 def result(source, region, lowerBound, upperBound):
     try:

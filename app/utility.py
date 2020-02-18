@@ -38,6 +38,7 @@ chrBound = {
 validSources = ["UCSC"]
 maxIntervals = 20
 maxIntervalSize = 1000000
+giggleUrl = ""
 
 class userInput:
 
