@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from flask import request
 
-class Search(FlaskForm):
+class intervalForm(FlaskForm):
     Input = StringField ('Input', validators=[DataRequired()])
     submit = SubmitField('Search For Overlapping Intervals')
 
@@ -14,9 +14,8 @@ class Search(FlaskForm):
 #                                                 ('1','Total Regions'), ('3','% Overlapping')])
 #     submit = SubmitField('Refine')
 
-class uploadForm(FlaskForm):
+class fileForm(FlaskForm):
     file = FileField()
-    submit = SubmitField('Search')
 
 # class FileUploadForm(FlaskForm):
 #     file = FileField(validators=[FileRequired(), FileAllowed(['bed','bed.gz'], 'Bed files only!')])

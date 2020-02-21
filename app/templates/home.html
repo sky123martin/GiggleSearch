@@ -1,6 +1,4 @@
-<!DOCTYPE html>
 <html>
-
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -8,51 +6,73 @@
     <title>Giggle Search</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-</head>
-<body>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="jquery-3.4.1.min.js"></script>
+
+  </head>
+
+<body onload="loadIntervalTab();">
+    <ul class="nav nav-tabs" style="height:50px;" id ="inputTabs">
+      
+        <li class="nav-item" id="intervalTab">
+            <a class="nav-link active" style = "color:#b53737;">Interval/s <span class="glyphicon glyphicon-glyphicon glyphicon-align-left"></span>
+            </a>
+          </li>
+        <li class="nav-item" id="fileTab">
+          <a class="nav-link" style = "color:#a4a5a6;">File <span class="glyphicon glyphicon-glyphicon glyphicon-download-alt"></span></a>
+        </li>
+        <li class="nav-item" id="infoTab"  style = "color:#a4a5a6;">
+            <a class="nav-link" ontoggle="">Help <span class="glyphicon glyphicon-glyphicon glyphicon-info-sign"></span></a>
+          </li>
+      </ul>
  
-    <div class="container">
+    <div class="container" id="title">
         <br></br> <br></br> <br></br>
-        <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>   
+        <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Giggle Algorithm Logo Image, letters 'Gi' "> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>   
         <H4 style = font-size:20px align="center"> <font color="#a4a5a6" style = "font-family:Times New Roman; "> Genomic Interval Overlap Search Engine </font></H4>
         <br></br>
       </div>
 
-{% if inputtype == "file" %}
-
-    {% if error != "" %}
-    <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post">
+<div id="fileSection">
+  {% if error != "" %}
+    <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post" enctype="multipart/form-data">
     {% else %} 
-    <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
+      <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post" enctype="multipart/form-data">
     {% endif %}
-    <div class="form-group row justify-content-md-center">
+    <!-- <div class="form-group row justify-content-md-center">
         <div class="col col-md-4">
-            <input type="file" class="custom-file-input" id="validatedFile" required>
-            <label class="custom-file-label" for="validatedFile">Choose interval file...</label>
-          <div class="invalid-feedback">Example invalid custom file feedback</div>
+            <div class="custom-file">
+                <input type="file" class="custom-file-input" id="customFile">
+                <label class="custom-file-label" for="customFile">Choose file</label>
+              </div>
+              <div class="invalid-feedback">Example invalid custom file feedback</div>
       </div> 
-    </div>
+    </div> -->
     <div class="form-group row justify-content-md-center">
         <div class="col-md-auto">
-            <div class="btn-group" id = "searchform">
-                <button type="submit" onclick="loading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
-                <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                    &#9432;</button>
+            <div class="btn-group" id = "fileform">
+                {{ fileform.hidden_tag() }}
+                {{ fileform.file }}
+                <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" >&#9432;</button>
+                <button type="submit" onclick="fileloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
+                    
               </div>
-          {{ form.csrf_token }}
+          {{ fileform.csrf_token }}
         </div>
-    </div>
-       
+      </div>     
     </form>
-  {% else %}
+  </div>
 
+  <div id="intervalSection">
     {% if error != "" %}
-      <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post">
+    <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post">
     {% else %} 
       <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
     {% endif %}
 
-        <div class="form-group row justify-content-md-center">
+        <div class="form-group row justify-content-md-center" >
             <div class="col col-md-6">
               
               {% if error != "" %}
@@ -67,26 +87,26 @@
 
           <div class="form-group row justify-content-md-center">
             <div class="col-md-auto">
-                <div class="btn-group" id = "searchform">
-                    <button type="submit" onclick="loading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
-                    <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                        &#9432;</button>
+                <div class="btn-group" id = "intervalform">
+                  <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" >&#9432;</button>
+                    <button type="submit" onclick="intervalloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
                   </div>
-              {{ form.csrf_token }}
+              {{ intervalform.csrf_token }}
             </div>
         </div>
     </form>
-
     </div>
-  {% endif %}
 
-  <div class="collapse justify-content-center" id="help">
+
+  <div class="justify-content-center" id="infoSection">
+      <br> <br>
       <div class="row justify-content-center">
     <div class="card card-body col-9">
         <ul class="list-group list-group-flush">
             <li class="list-group-item">
-              <h4 style="color:#00008b;">Giggle Search</h4>
-              <p>As an interface for the algorihtm <a href="https://github.com/ryanlayer/giggle">Giggle</a> this search engine takes user inputted chromosone regions and finds overlapping annotation files in genomic databases, such as the UCSC Genomic Institute.  </p>
+                <H1 style = font-size:40px align="left" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "100px" style = "padding-bottom: 0px;" alt="Giggle Algorithm Logo Image, letters 'Gi' "> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>
+              </li><li class="list-group-item">
+                <p>As an interface for the algorihtm <a href="https://github.com/ryanlayer/giggle">Giggle</a> this search engine takes user inputted chromosone regions and finds overlapping annotation files in genomic databases, such as the UCSC Genomic Institute.  </p>
             </li>
             <li class="list-group-item">
                 <h4 style="color:#00008b;">HOW TO: Text Input Interval Search</h4>
@@ -177,25 +197,62 @@
 
             </li>
           </ul>
-
-
     </div>
   </div>
   </div>
   
 </body>
-  <script> 
-  function loading(){
+<script> 
+  function intervalloading(){
     // <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>
         document.getElementById("gigglelogo").innerHTML = "<img src=\"../static/gigglelogo.gif\" width = \"175px\" style = \"padding-bottom: 0px;\" alt=\"Gi\"> <font color=\"#a4a5a6\" style = \"font-family:Times New Roman; \" >ggle</font>";
-        // document.getElementById("help").style.display="none";
-        document.getElementById("searchform").style.display="none";
+        document.getElementById("help").style.display="none";
+        document.getElementById("intervalform").style.display="none";
 
       }
-  
-  </script>
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  function fileloading(){
+    // <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>
+        document.getElementById("gigglelogo").innerHTML = "<img src=\"../static/gigglelogo.gif\" width = \"175px\" style = \"padding-bottom: 0px;\" alt=\"Gi\"> <font color=\"#a4a5a6\" style = \"font-family:Times New Roman; \" >ggle</font>";
+        document.getElementById("help").style.display="none";
+        document.getElementById("fileform").style.display="none";
+
+      }
+  function loadIntervalTab(){
+    document.getElementById("infoSection").style.display="none";
+    document.getElementById("fileSection").style.display="none";
+  }
+  $("#fileSection").hide();
+  $("#infoSection").hide();
+  $("#infoSection").hide();
+  $(document).ready(function(){
+    $("#intervalTab").click(function(){
+      $("#fileSection").hide();
+      $("#infoSection").hide();
+      $("#intervalSection").show();
+      $("#title").show();
+      document.getElementById("intervalTab").innerHTML = "<li class=\"nav-item\" id=\"intervalTab\" >\ <a class=\"nav-link active\" ontoggle=\"loadIntervalTab();\" style = \"color:#b53737;\"> <span class=\"glyphicon glyphicon-glyphicon glyphicon-align-left\"></span> Interval/s </a></li>";
+      document.getElementById("infoTab").innerHTML = "<li class=\"nav-item\" id=\"infoTab\" >\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-info-sign\"></span>Info</a></li>";
+      document.getElementById("fileTab").innerHTML = "<li class=\"nav-item\" id=\"fileTab\" >\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-download-alt\"></span>File</a></li>";    });
+    $("#fileTab").click(function(){
+      $("#intervalSection").hide();
+      $("#infoSection").hide();
+      $("#fileSection").show();
+      $("#title").show();
+      document.getElementById("infoTab").innerHTML = "<li class=\"nav-item\" id=\"infoTab\">\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-info-sign\"></span>Info</a></li>";
+      document.getElementById("intervalTab").innerHTML = "<li class=\"nav-item\" id=\"intervalTab\">\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"> <span class=\"glyphicon glyphicon-glyphicon glyphicon-align-left\"></span> Interval/s </a></li>";
+      document.getElementById("fileTab").innerHTML = "<li class=\"nav-item\" id=\"fileTab\">\ <a class=\"nav-link active\" ontoggle=\"loadIntervalTab();\" style = \"color:#b53737;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-download-alt\"></span>File</a></li>";    });
+    $("#infoTab").click(function(){
+      $("#intervalSection").hide();
+      $("#fileSection").hide();
+      $("#title").hide();
+      $("#infoSection").show();
+      document.getElementById("infoTab").innerHTML = "<li class=\"nav-item\" id=\"infoTab\">\ <a class=\"nav-link active\" ontoggle=\"loadIntervalTab();\" style = \"color:#b53737;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-info-sign\"></span>Info</a></li>";
+      document.getElementById("intervalTab").innerHTML = "<li class=\"nav-item\" id=\"intervalTab\">\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"> <span class=\"glyphicon glyphicon-glyphicon glyphicon-align-left\"></span> Interval/s </a></li>";
+      document.getElementById("fileTab").innerHTML = "<li class=\"nav-item\" id=\"fileTab\">\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-download-alt\"></span>File</a></li>";
+    });
+
+
+  });
+</script>
+
 </html>

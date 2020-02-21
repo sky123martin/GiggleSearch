@@ -1,7 +1,7 @@
 from __future__ import print_function
 from flask import Flask, render_template, flash, request, redirect
 from app import app
-from app.forms import Search, uploadForm
+from app.forms import intervalForm, fileForm
 from bs4 import BeautifulSoup as bs
 from flask_wtf import Form
 from flask_wtf.file import FileField
@@ -29,30 +29,30 @@ search = giggle()
 @app.route('/search/inputtype:<string:inputtype>', methods=['GET', 'POST'])
 @app.route('/inputtype:<string:inputtype>', methods=['GET', 'POST'])
 def home(inputtype = None, error = None):
+    intervalform = intervalForm()
+    fileform = fileForm(CombinedMultiDict((request.files, request.form)))
 
-    if inputtype == None or inputtype == "manual":
-        form = Search()
+    if inputtype == None or inputtype == "interval":
         inputtype = "manual"
-        if form.validate_on_submit() and error == None:
-            print("Recieved Input:", form.Input.data)
-            out = parse.parseManualSearch(form.Input.data)
-            if isinstance(out, str): # parsing error occured
-                return render_template('home.html', form = form, inputtype=inputtype, error=out)
-            else:
-                return redirect("/search/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))   
-
     elif inputtype == "file":
-        form = uploadForm(CombinedMultiDict((request.files, request.form)))
-        if form.validate_on_submit():
-            f = form.file.data
-            filename = secure_filename(f.filename)
-            print("File Uploaded:", filename)
-
+        inputtype = "file"
     else:
         return errorHandling("inputtype:"+inputtype)
     
+    if intervalform.validate_on_submit() and error == None:
+        print("Recieved Input:", intervalform.Input.data)
+        out = parse.parseManualSearch(intervalform.Input.data)
+        if isinstance(out, str): # parsing error occured
+            return render_template('home.html', fileform = fileform, intervalform = intervalform, inputtype=inputtype, error=out)
+        else:
+            return redirect("/search/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))   
+
+    elif fileform.validate_on_submit() and error == None:
+        filename = secure_filename(fileform.file.data.filename)
+        print(filename)
+
     print("Current Input Type: ", inputtype)
-    return render_template('home.html', form = form, inputtype=inputtype, error = "")
+    return render_template('home.html', fileform = fileform, intervalform=intervalform, inputtype=inputtype, error = "")
 
 @app.route("/search/<source>/<fileName>", methods=['GET', 'POST'])
 def fileResult(source, fileName):
@@ -60,8 +60,8 @@ def fileResult(source, fileName):
 @app.route("/search/<string:source>/<string:region>:<int:lowerBound>-<int:upperBound>", methods=['GET', 'POST'])
 def result(source, region, lowerBound, upperBound):
     try:
+        form = intervalForm()
         # Definition of forms:
-        form = Search()
         print("Result recieved:", session.get('intervals', None))
         print("#")
         identifier = [region, lowerBound, upperBound]
@@ -69,9 +69,9 @@ def result(source, region, lowerBound, upperBound):
         if form.validate_on_submit():
             out = parse.parseManualSearch(form.Input.data)
             if isinstance(out, str): # parsing error occured
-                return render_template('home.html', form = form, inputtype="manual", error=out)
+                return home("interval", out)
             else:
-                return redirect("/search?{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
+                return redirect("/search/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
 
         print("INITIATING SEARCH")
         start_total = time.time()
@@ -121,14 +121,14 @@ def result(source, region, lowerBound, upperBound):
         for name in overlap:
             name.append(i)
             i = i +1
-        return render_template('manualResult.html', form = form, results = overlap, allresults = overlap, searchtime = end_total - start_total, sessionIntervals= session['intervals'], numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
+        return render_template('intervalResult.html', form = form, results = overlap, allresults = overlap, searchtime = end_total - start_total, sessionIntervals= session['intervals'], numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
     except:
-        return render_template('home.html', form = form, inputtype="manual", error="Unexpected error found, try again.")
+        return render_template('404.html', utterNoneSense = "Unexpected error found, try again.")
 
 @app.route("/<path:utterNoneSense>", methods=['GET', 'POST'])
 @app.route("/error", methods=['GET', 'POST'])
 def errorHandling(utterNoneSense):
-    return render_template('404.html',utterNoneSense=utterNoneSense)
+    return render_template('404.html', utterNoneSense = "\"\\" + utterNoneSense +  "\"" + " does not exist.")
 
 def getDataInfo(data, source):
     if source == "UCSC" or source == "ucsc":
