@@ -13,21 +13,20 @@
 
   </head>
 
-<body onload="loadIntervalTab();">
-    <ul class="nav nav-tabs" style="height:50px;" id ="inputTabs">
-      
-        <li class="nav-item" id="intervalTab">
-            <a class="nav-link active" style = "color:#b53737;">Interval/s <span class="glyphicon glyphicon-glyphicon glyphicon-align-left"></span>
-            </a>
-          </li>
-        <li class="nav-item" id="fileTab">
-          <a class="nav-link" style = "color:#a4a5a6;">File <span class="glyphicon glyphicon-glyphicon glyphicon-download-alt"></span></a>
+<body>
+    <ul class="nav nav-tabs" style="height:50px;" id = "navBar">
+        <li class="nav-item">
+          <a class="nav-link active" style = "color:#b53737;" id="intervalTab">Interval/s <span class="glyphicon glyphicon-glyphicon glyphicon-align-left"></span></a>
         </li>
-        <li class="nav-item" id="infoTab"  style = "color:#a4a5a6;">
-            <a class="nav-link" ontoggle="">Help <span class="glyphicon glyphicon-glyphicon glyphicon-info-sign"></span></a>
-          </li>
-      </ul>
- 
+        <li class="nav-item">
+          <a class="nav-link" style = "color:#a4a5a6;" id="fileTab">File <span class="glyphicon glyphicon-glyphicon glyphicon-download-alt"></span></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" style = "color:#a4a5a6;" id ="infoTab">About <span class="glyphicon glyphicon-glyphicon glyphicon-info-sign"></span></a>
+        </li>
+    </ul>
+
+  
     <div class="container" id="title">
         <br></br> <br></br> <br></br>
         <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Giggle Algorithm Logo Image, letters 'Gi' "> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>   
@@ -35,26 +34,18 @@
         <br></br>
       </div>
 
-<div id="fileSection">
+<div id="fileSection" style = "display:none;">
   {% if error != "" %}
     <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post" enctype="multipart/form-data">
     {% else %} 
-      <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post" enctype="multipart/form-data">
+    <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post" enctype="multipart/form-data">
     {% endif %}
-    <!-- <div class="form-group row justify-content-md-center">
-        <div class="col col-md-4">
-            <div class="custom-file">
-                <input type="file" class="custom-file-input" id="customFile">
-                <label class="custom-file-label" for="customFile">Choose file</label>
-              </div>
-              <div class="invalid-feedback">Example invalid custom file feedback</div>
-      </div> 
-    </div> -->
+
     <div class="form-group row justify-content-md-center">
         <div class="col-md-auto">
             <div class="btn-group" id = "fileform">
-                {{ fileform.hidden_tag() }}
                 {{ fileform.file }}
+                <br>
                 <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" >&#9432;</button>
                 <button type="submit" onclick="fileloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
                     
@@ -98,7 +89,7 @@
     </div>
 
 
-  <div class="justify-content-center" id="infoSection">
+  <div class="justify-content-center" id="infoSection" style = "display:none;">
       <br> <br>
       <div class="row justify-content-center">
     <div class="card card-body col-9">
@@ -217,42 +208,40 @@
         document.getElementById("fileform").style.display="none";
 
       }
-  function loadIntervalTab(){
-    document.getElementById("infoSection").style.display="none";
-    document.getElementById("fileSection").style.display="none";
-  }
-  $("#fileSection").hide();
-  $("#infoSection").hide();
-  $("#infoSection").hide();
-  $(document).ready(function(){
+  // function loadIntervalTab(){
+  //   document.getElementById("infoSection").style.display="none";
+  //   document.getElementById("fileSection").style.display="none";
+  // }
+
+ $(document).ready(function(){
     $("#intervalTab").click(function(){
       $("#fileSection").hide();
       $("#infoSection").hide();
       $("#intervalSection").show();
       $("#title").show();
-      document.getElementById("intervalTab").innerHTML = "<li class=\"nav-item\" id=\"intervalTab\" >\ <a class=\"nav-link active\" ontoggle=\"loadIntervalTab();\" style = \"color:#b53737;\"> <span class=\"glyphicon glyphicon-glyphicon glyphicon-align-left\"></span> Interval/s </a></li>";
-      document.getElementById("infoTab").innerHTML = "<li class=\"nav-item\" id=\"infoTab\" >\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-info-sign\"></span>Info</a></li>";
-      document.getElementById("fileTab").innerHTML = "<li class=\"nav-item\" id=\"fileTab\" >\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-download-alt\"></span>File</a></li>";    });
+      $( "#intervalTab" ).addClass( "active" ).css({ "color": "#b53737" });
+      $( "#fileTab" ).removeClass( "active" ).css({ "color": "#a4a5a6" });
+      $( "#infoTab" ).removeClass( "active" ).css({ "color": "#a4a5a6" });
+    });
     $("#fileTab").click(function(){
       $("#intervalSection").hide();
       $("#infoSection").hide();
       $("#fileSection").show();
       $("#title").show();
-      document.getElementById("infoTab").innerHTML = "<li class=\"nav-item\" id=\"infoTab\">\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-info-sign\"></span>Info</a></li>";
-      document.getElementById("intervalTab").innerHTML = "<li class=\"nav-item\" id=\"intervalTab\">\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"> <span class=\"glyphicon glyphicon-glyphicon glyphicon-align-left\"></span> Interval/s </a></li>";
-      document.getElementById("fileTab").innerHTML = "<li class=\"nav-item\" id=\"fileTab\">\ <a class=\"nav-link active\" ontoggle=\"loadIntervalTab();\" style = \"color:#b53737;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-download-alt\"></span>File</a></li>";    });
+      $( "#intervalTab" ).removeClass( "active" ).css({ "color": "#a4a5a6" });
+      $( "#fileTab" ).addClass( "active" ).css({ "color": "#b53737" });
+      $( "#infoTab" ).removeClass( "active" ).css({ "color": "#a4a5a6" });
+    });
     $("#infoTab").click(function(){
       $("#intervalSection").hide();
       $("#fileSection").hide();
       $("#title").hide();
       $("#infoSection").show();
-      document.getElementById("infoTab").innerHTML = "<li class=\"nav-item\" id=\"infoTab\">\ <a class=\"nav-link active\" ontoggle=\"loadIntervalTab();\" style = \"color:#b53737;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-info-sign\"></span>Info</a></li>";
-      document.getElementById("intervalTab").innerHTML = "<li class=\"nav-item\" id=\"intervalTab\">\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"> <span class=\"glyphicon glyphicon-glyphicon glyphicon-align-left\"></span> Interval/s </a></li>";
-      document.getElementById("fileTab").innerHTML = "<li class=\"nav-item\" id=\"fileTab\">\ <a class=\"nav-link\" ontoggle=\"loadIntervalTab();\" style = \"color:#a4a5a6;\"><span class=\"glyphicon glyphicon-glyphicon glyphicon-download-alt\"></span>File</a></li>";
+      $( "#intervalTab" ).removeClass( "active" ).css({ "color": "#a4a5a6" });
+      $( "#fileTab" ).removeClass( "active" ).css({ "color": "#a4a5a6" });
+      $( "#infoTab" ).addClass( "active" ).css({ "color": "#b53737" });
     });
-
-
-  });
+    });
 </script>
 
 </html>
