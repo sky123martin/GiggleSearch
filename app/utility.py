@@ -133,38 +133,20 @@ class giggle:
         print("STIX OVERLAPPING REGIONS PARSED ({} seconds)".format(time.time() - start_task))
         return results
 
-    def fileUpload(self,data):
-        interface = giggleUrl+'{}?region={}:{}-{}'
-        region = data[0]
-        lowerBound = data[1]
-        upperBound = data[2]
-        source = data[3]
+    def fileUpload(self,filename):
+        interface = giggleUrl+'filepost'
         start_task = time.time()
         url = interface.format(source.lower(), region, lowerBound, upperBound)
         print(url)
-        request = requests.get(url)
+        with open(filename, 'rb') as f:
+            request = requests.post('http://httpbin.org/post', files={'report.xls': f})
         print("##")
         print("Giggle REQUEST + RETURN ({} seconds)".format(time.time() - start_task))
         
-        start_task = time.time()
         soup = bs(request.text,"lxml")
         text = soup.text.split('\n') 
-        results = []
-        for i in range(0,len(text)-1):
-            temp = text[i].split("\t")
-            split = temp[0].split("/")
-            temp[1] = int(temp[1])
-            temp[2] = int(temp[2])
-            if temp[2] > 0:
-                if len(split) == 2 :
-                    temp[0] = split[1]
 
-                temp[0] = temp[0].split(".bed.gz")[0]
-                if temp[0][-4:] != "Link":
-                    results.append(temp)
-        print("####")
-        print("STIX OVERLAPPING REGIONS PARSED ({} seconds)".format(time.time() - start_task))
-        return results
+        return text
 
 class UCSC:
     def __init__(self):

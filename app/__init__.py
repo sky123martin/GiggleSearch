@@ -8,9 +8,6 @@ app.config.from_object(Config)
 bootstrap = Bootstrap(app)
 
 mysql = MySQL()
-app.config['MYSQL_DATABASE_USER'] = 'genome'
-app.config['MYSQL_DATABASE_DB'] = 'hg19'
-app.config['MYSQL_DATABASE_HOST'] = 'genome-mysql.soe.ucsc.edu'
 mysql.init_app(app)
 
 

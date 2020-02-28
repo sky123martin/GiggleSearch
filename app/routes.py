@@ -1,5 +1,6 @@
 from __future__ import print_function
-from flask import Flask, render_template, flash, request, redirect
+from flask import Flask, render_template, flash, request, redirect, url_for
+from werkzeug.utils import secure_filename
 from app import app
 from app.forms import intervalForm, fileForm
 from bs4 import BeautifulSoup as bs
@@ -25,40 +26,42 @@ parse = userInput()
 search = giggle()
 
 @app.route('/', methods=['GET', 'POST'])
-@app.route('/search', methods=['GET', 'POST'])
-@app.route('/search/inputtype:<string:inputtype>', methods=['GET', 'POST'])
-@app.route('/inputtype:<string:inputtype>', methods=['GET', 'POST'])
-def home(inputtype = None, error = None):
+def home(error = None):
     intervalform = intervalForm()
     fileform = fileForm(CombinedMultiDict((request.files, request.form)))
-
-    if inputtype == None or inputtype == "interval":
-        inputtype = "manual"
-    elif inputtype == "file":
-        inputtype = "file"
-    else:
-        return errorHandling("inputtype:"+inputtype)
     
     if intervalform.validate_on_submit() and error == None:
         print("Recieved Input:", intervalform.Input.data)
         out = parse.parseManualSearch(intervalform.Input.data)
         if isinstance(out, str): # parsing error occured
-            return render_template('home.html', fileform = fileform, intervalform = intervalform, inputtype=inputtype, error=out)
+            return render_template('home.html', fileform = fileform, intervalform = intervalform, error=out)
         else:
             return redirect("/search/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))   
 
     elif fileform.validate_on_submit() and error == None:
         filename = secure_filename(fileform.file.data.filename)
-        print(filename)
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = "No selected file")
+        
+        file = request.files['file']
 
-    print("Current Input Type: ", inputtype)
-    return render_template('home.html', fileform = fileform, intervalform=intervalform, inputtype=inputtype, error = "")
+        if file.filename == '':
+            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = "No selected file")
+       
+        if file :
+            filename = secure_filename(file.filename)
+            file.save("QueryFile/"+filename)
+            return redirect("/search/{}".format(filename))   
 
-@app.route("/search/<source>/<fileName>", methods=['GET', 'POST'])
-def fileResult(source, fileName):
-    c = 99
+    return render_template('home.html', fileform = fileform, intervalform = intervalform, error = "")
+
+@app.route("/search/<filename>", methods=['GET', 'POST'])
+def fileResult(filename):
+    giggle.fileUpload("QueryFile/"+filename)
+
 @app.route("/search/<string:source>/<string:region>:<int:lowerBound>-<int:upperBound>", methods=['GET', 'POST'])
-def result(source, region, lowerBound, upperBound):
+def intervalResult(source, region, lowerBound, upperBound):
     try:
         form = intervalForm()
         # Definition of forms:
@@ -69,7 +72,7 @@ def result(source, region, lowerBound, upperBound):
         if form.validate_on_submit():
             out = parse.parseManualSearch(form.Input.data)
             if isinstance(out, str): # parsing error occured
-                return home("interval", out)
+                return home(out)
             else:
                 return redirect("/search/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
 

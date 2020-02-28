@@ -8,15 +8,5 @@ class intervalForm(FlaskForm):
     Input = StringField ('Input', validators=[DataRequired()])
     submit = SubmitField('Search For Overlapping Intervals')
 
-# class FilterResultsForm(FlaskForm):
-#     ascending = BooleanField('Order Ascending')
-#     sortBy = SelectField(u'Sort By', choices=[('0','Name'), ('2','Overlap'), 
-#                                                 ('1','Total Regions'), ('3','% Overlapping')])
-#     submit = SubmitField('Refine')
-
 class fileForm(FlaskForm):
-    file = FileField()
-
-# class FileUploadForm(FlaskForm):
-#     file = FileField(validators=[FileRequired(), FileAllowed(['bed','bed.gz'], 'Bed files only!')])
-#     submit = SubmitField('Search')
+    file = FileField(validators=[FileRequired(), FileAllowed(['bed'], 'Bed files only!')])
