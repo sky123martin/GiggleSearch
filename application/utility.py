@@ -1,15 +1,15 @@
-from app import app, mysql
 from flask import session
+from application import app
+import mysql.connector
+import sqlite3
 from bs4 import BeautifulSoup as bs
-import pandas as pd 
+from contextlib import contextmanager
+import pandas as pd
 import numpy as np 
-from multiprocessing.dummy import Pool as ThreadPool 
-import multiprocessing
-from flaskext.mysql import MySQL
 import time
 import math
-import requests
 import re
+import requests 
 
 chrBound = {
         "chr1":249000000,
@@ -39,10 +39,22 @@ validSources = ["UCSC"]
 maxIntervals = 20
 maxIntervalSize = 1000000
 
+@contextmanager
+def connect_SQL_db(host, user):
+    try:
+        db = mysql.connector.connect(
+                host=host,
+                user=user
+                )
+        yield db
+    except mysql.connector.Error as e:
+        raise e
+    else:
+        db.close()
+
 class userInput:
 
     def parseManualSearch(self, Input):
-
     #     Input = "chr1 100 : 2000 chr2 100 : 2000 chr3 100 : 2000 chr1 1030 : 2000 from UCSC"
     #     Out = [[u'chr1', u'100', u'2000', u'UCSC'], [u'chr2', u'100', u'2000', u'UCSC'], [u'chr3', u'100', u'2000', u'UCSC'], [u'chr1', u'1030', u'2000', u'UCSC']])
         currentChromosome = ""
@@ -55,13 +67,14 @@ class userInput:
         
         try:
             for i in re.split('\W+',Input):
-                if len(intervals)>maxIntervals:
-                    break
+                if len(intervals) > maxIntervals:
+                    return "Max interval exceeded, please convert to file format and proceed."
+
                 if i[0:3].lower() == "chr":
                     if currentInterval == []:
                         currentInterval.append(str(i))
                     else:
-                        return "Uncomplete interval detected in input."
+                        return "Uncomplete interval detected in input. Check and make sure \"chr\" is used to signify chromosome"
 
                 elif i.isdigit():
                     if len(currentInterval) == 0: #digit without chr 
@@ -86,34 +99,38 @@ class userInput:
                         elif currentInterval not in intervals:
                             intervals.append(currentInterval)
                             currentInterval = []
-            if len(intervals)==0:
+
+            if len(intervals) == 0:
                 return "No valid intervals entered."
+
             intervals.sort(key = lambda x : (x[0], x[1]))
-            session['intervals'] = intervals
-            session["LenIntervals"] = len(intervals)
+            
             return intervals
         except:
             return "Incorrect input formatting."
 
 class giggle:
+
     def __init__(self):
         pass
 
     def single_overlap(self,data):
         interface = 'https://stix.colorado.edu/{}?region={}:{}-{}'
+
         region = data[0]
         lowerBound = data[1]
         upperBound = data[2]
         source = data[3]
+
         start_task = time.time()
         url = interface.format(source.lower(), region, lowerBound, upperBound)
         print(url)
-        request = requests.get(url)
+        val = requests.get(url)
         print("##")
         print("Giggle REQUEST + RETURN ({} seconds)".format(time.time() - start_task))
         
         start_task = time.time()
-        soup = bs(request.text,"lxml")
+        soup = bs(val.text,"lxml")
         text = soup.text.split('\n') 
         results = []
         for i in range(0,len(text)-1):
@@ -141,17 +158,11 @@ class UCSC:
 
     def getUCSCData(self, results):
         start_task = time.time()
-        conn = mysql.connect()
-        cursor = conn.cursor()
-        query = "SELECT tableName, shortLabel, longLabel, html from hg19.trackDb order by tableName"
-        cursor.execute(query)
-        orderedlist = []
-
-        for row in cursor:
-            orderedlist.append(row)
-        orderedlist = pd.DataFrame(orderedlist, columns=["tableName", "shortLabel", "longLabel", "html"])
-        dfresults = pd.DataFrame(results, columns=["tableName","regionsize","overlap"])
-        result = pd.merge(dfresults, orderedlist, how='inner', on='tableName')
+        tablename = "hg19"
+        with connect_SQL_db(app.config["UCSC_SQL_DB_HOST"], "genome") as db:
+            df_metadata = pd.read_sql("SELECT tableName, shortLabel, longLabel, html from {}.trackDb order by tableName".format(tablename), con=db)
+            df_results = pd.DataFrame(results, columns=["tableName","regionsize","overlap"])
+            result = pd.merge(df_results, df_metadata, how='inner', on='tableName')
         result = result.fillna("")
         result = result.values.tolist()
 
