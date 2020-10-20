@@ -4,7 +4,7 @@ Flask-WTF
 numpy
 pandas
 werkzeug==0.16.0
-urllib3== 1.21.1
+urllib3== 1.24.2
 flask_bootstrap
 requests==2.24.0
 mysql-connector-python
