@@ -1,8 +1,8 @@
 from __future__ import print_function
-from flask import Flask, render_template, flash, request, redirect, url_for
-from werkzeug.utils import secure_filename
-from app import app
-from app.forms import intervalForm, fileForm
+from application import app
+
+from flask import Flask, render_template, flash, request, redirect, session
+from application.forms import Search, fileForm, intervalForm
 from bs4 import BeautifulSoup as bs
 from flask_wtf import Form
 from flask_wtf.file import FileField
@@ -10,20 +10,15 @@ from werkzeug import secure_filename
 from werkzeug.datastructures import CombinedMultiDict
 import pandas as pd 
 import numpy as np 
-from multiprocessing.dummy import Pool as ThreadPool 
-import multiprocessing
-from flaskext.mysql import MySQL
 import time
 import math
-from utility import *
-from utility import session
-import requests
 import re
 import json
 
-
-parse = userInput()
-search = giggle()
+from application import utility
+UCSC = utility.UCSC()
+parse = utility.userInput()
+search = utility.giggle()
 
 @app.route('/', methods=['GET', 'POST'])
 def home(error = None):
@@ -36,6 +31,8 @@ def home(error = None):
         if isinstance(out, str): # parsing error occured
             return render_template('home.html', fileform = fileform, intervalform = intervalform, error=out)
         else:
+            session['intervals'] = out
+            session["LenIntervals"] = len(out)
             return redirect("/search/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))   
 
     elif fileform.validate_on_submit() and error == None:
@@ -62,71 +59,79 @@ def fileResult(filename):
 
 @app.route("/search/<string:source>/<string:region>:<int:lowerBound>-<int:upperBound>", methods=['GET', 'POST'])
 def intervalResult(source, region, lowerBound, upperBound):
-    try:
-        form = intervalForm()
-        # Definition of forms:
-        print("Result recieved:", session.get('intervals', None))
-        print("#")
-        identifier = [region, lowerBound, upperBound]
+    #try:
 
-        if form.validate_on_submit():
-            out = parse.parseManualSearch(form.Input.data)
-            if isinstance(out, str): # parsing error occured
-                return home(out)
-            else:
-                return redirect("/search/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
+    form = Search()
+    
+    if session.get('intervals', None) == None:
+        session["interval"] = [[region, lowerBound, upperBound, source]]
+    print("Result recieved:", session.get('intervals', None))
+    print("#")
+    identifier = [region, lowerBound, upperBound]
 
-        print("INITIATING SEARCH")
-        start_total = time.time()
-        start_task = time.time()
-
-        overlap = search.singleOverlap([region, lowerBound, upperBound, source.lower()])
-
-        overlap.sort(key = lambda ele : ele[2], reverse = 1)
-
-        end_task = time.time()
-        print("#####")
-        print("FILTERING FOR SPECIFIED CONSTRAINTS ({} seconds)".format(end_task - start_task))
-        #Pagination
-        # determining results displayed on current page
-        
-        page = 1
-        maxpage = int(math.ceil(len(overlap)/10.0))
-        if page < 7 or maxpage < 10:
-            if maxpage < 10:
-                pageNums = list(range(1, maxpage + 1))
-            else:
-                pageNums = list(range(1, 11))
+    if form.validate_on_submit():
+        out = parse.parseManualSearch(form.Input.data)
+        if isinstance(out, str): # parsing error occured
+            return render_template('home.html', form = form, inputtype="manual", error=out)
         else:
-            if maxpage < (page + 4):
-                pageNums = list(range(page-5, maxpage + 1))
-            else:
-                pageNums = list(range(page-5, page + 5))
-        currentpage = overlap[(page*10-10):(page*10)]
-        print("Pagination",pageNums, page, maxpage)
-        # make array of links for pages
-        start_task = time.time()
-        overlap = getDataInfo(overlap, source) #generic function to handle data information gathering
-        end_task = time.time()
-        print("########")
-        print("DATA SOURCE INFOMATION COLLECTED ({} seconds)".format(end_task - start_task))
+            return redirect("/result/{}/{}:{}-{}".format(out[0][3], out[0][0], out[0][1], out[0][2]))
 
-        currentpage = overlap[(page*10-10):(page*10)]
+    print("INITIATING SEARCH")
+    start_total = time.time()
+    start_task = time.time()
 
-        end_total = time.time()
-        print("##########")
-        print("TOTAL SEARCH TIME ELAPSED {}".format(end_total - start_total))
-        print("####################")
-        print("RENDERING RESULTS {}-{}".format(page*10-10,page*10))
-        print("########################################")
-        # [0 filename, 1 total region, 2 overlap, 3 short name, 4 long name, 5 description, 6 short description, 7 ID]
-        i = 1
-        for name in overlap:
-            name.append(i)
-            i = i +1
-        return render_template('intervalResult.html', form = form, results = overlap, allresults = overlap, searchtime = end_total - start_total, sessionIntervals= session['intervals'], numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
-    except:
-        return render_template('404.html', utterNoneSense = "Unexpected error found, try again.")
+    overlap = search.single_overlap([region, lowerBound, upperBound, source.lower()])
+    overlap.sort(key = lambda ele : ele[2], reverse = 1)
+
+    end_task = time.time()
+    print("#####")
+    print("FILTERING FOR SPECIFIED CONSTRAINTS ({} seconds)".format(end_task - start_task))
+    #Pagination
+    # determining results displayed on current page
+    
+    page = 1
+    maxpage = int(math.ceil(len(overlap)/10.0))
+    if page < 7 or maxpage < 10:
+        if maxpage < 10:
+            pageNums = list(range(1, maxpage + 1))
+        else:
+            pageNums = list(range(1, 11))
+    else:
+        if maxpage < (page + 4):
+            pageNums = list(range(page-5, maxpage + 1))
+        else:
+            pageNums = list(range(page-5, page + 5))
+    currentpage = overlap[(page*10-10):(page*10)]
+    print("Pagination",pageNums, page, maxpage)
+    # make array of links for pages
+    start_task = time.time()
+    overlap = getDataInfo(overlap, source) #generic function to handle data information gathering
+    end_task = time.time()
+    print("########")
+    print("DATA SOURCE INFOMATION COLLECTED ({} seconds)".format(end_task - start_task))
+
+    currentpage = overlap[(page*10-10):(page*10)]
+
+    end_total = time.time()
+    print("##########")
+    print("TOTAL SEARCH TIME ELAPSED {}".format(end_total - start_total))
+    print("####################")
+    print("RENDERING RESULTS {}-{}".format(page*10-10,page*10))
+    print("########################################")
+    # [0 filename, 1 total region, 2 overlap, 3 short name, 4 long name, 5 description, 6 short description, 7 ID]
+
+    i = 1
+    for name in overlap:
+        name.append(i)
+        i = i +1
+    print(overlap[0])
+    print(session.get('intervals', None))
+    return render_template('result.html', form = form, results = overlap, allresults = overlap, searchtime = end_total - start_total, sessionIntervals= session['intervals'], numresults = len(overlap), source = source, identifier=identifier, page = 1, pageNums=pageNums)
+    # except:
+    #     return render_template('home.html', form = form, inputtype="manual", error="Unexpected error found, try again.")
+
+    # except:
+    #     return render_template('404.html', utterNoneSense = "Unexpected error found, try again.")
 
 @app.route("/<path:utterNoneSense>", methods=['GET', 'POST'])
 @app.route("/error", methods=['GET', 'POST'])
@@ -135,6 +140,7 @@ def errorHandling(utterNoneSense):
 
 def getDataInfo(data, source):
     if source == "UCSC" or source == "ucsc":
-        return UCSC().getUCSCData(data)
+        return UCSC.getUCSCData(data)
     else:
         return data
+

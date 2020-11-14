@@ -8,5 +8,11 @@ class intervalForm(FlaskForm):
     Input = StringField ('Input', validators=[DataRequired()])
     submit = SubmitField('Search For Overlapping Intervals')
 
+class Search(FlaskForm):
+    Input = StringField ('Input', validators=[DataRequired()])
+    submit = SubmitField('Search For Overlapping Intervals')
+
 class fileForm(FlaskForm):
     file = FileField(validators=[FileRequired(), FileAllowed(['bed'], 'Bed files only!')])
+# from flask_wtf.file import FileField, FileRequired, FileAllowed
+

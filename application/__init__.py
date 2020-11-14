@@ -1,14 +1,10 @@
 from flask import Flask
-from config import Config
-from flask_bootstrap import Bootstrap
-from flaskext.mysql import MySQL
-
+from application.config import Config
 app = Flask(__name__)
 app.config.from_object(Config)
+
+from flask_bootstrap import Bootstrap
+
 bootstrap = Bootstrap(app)
 
-mysql = MySQL()
-mysql.init_app(app)
-
-
-from app import routes
+from application import routes
