@@ -8,3 +8,12 @@ class Config(object):
     UCSC_SQL_DB_HOST = "genome-mysql.soe.ucsc.edu"
     UCSC_SQL_DB_USER = "genome"
     UCSC_API = "https://api.genome.ucsc.edu/"
+
+    # Path to Giggle Index
+    SERVER_PATH = "../GiggleIndexServer"
+
+    TIMEOUT = 100
+
+
+    MAX_INTERVALS = 20
+    MAX_INTERVAL_SIZE = 30000 # Base pairs

@@ -2,202 +2,155 @@ from flask import session
 from application import app
 import mysql.connector
 import sqlite3
+import sys
 from bs4 import BeautifulSoup as bs
 from contextlib import contextmanager
 import pandas as pd
 import numpy as np 
+import random
+import subprocess
 import time
 import math
 import re
 import requests 
 
-chrBound = {
-        "chr1":249000000,
-        "chr2":242000000,
-        "chr3":198000000,
-        "chr4":186000000,
-        "chr5":181000000,
-        "chr6":170000000,
-        "chr7":159000000,
-        "chr8":146000000,
-        "chr9":141000000,
-        "chr10":133000000,
-        "chr11":135000000,
-        "chr12":134000000,
-        "chr13":115000000,
-        "chr14":107000000,
-        "chr15":102000000,
-        "chr16":90000000,
-        "chr17":83000000,
-        "chr18":78000000,
-        "chr19":59000000,
-        "chr20":63000000,
-        "chr21":48000000,
-        "chr22":49000000
-    }
-validSources = ["UCSC"]
-maxIntervals = 20
-maxIntervalSize = 1000000
-giggleUrl = "https://stix.colorado.edu/"
-
-@contextmanager
-def connect_SQL_db(host, user):
-    try:
-        db = mysql.connector.connect(
-                host=host,
-                user=user
-                )
-        yield db
-    except mysql.connector.Error as e:
-        raise e
-    else:
-        db.close()
-
-class userInput:
-
-    def parseManualSearch(self, Input):
-    #     Input = "chr1 100 : 2000 chr2 100 : 2000 chr3 100 : 2000 chr1 1030 : 2000 from UCSC"
-    #     Out = [[u'chr1', u'100', u'2000', u'UCSC'], [u'chr2', u'100', u'2000', u'UCSC'], [u'chr3', u'100', u'2000', u'UCSC'], [u'chr1', u'1030', u'2000', u'UCSC']])
-        currentChromosome = ""
-        intervals = []
-        source = str(Input.split()[-1].upper())
-        currentInterval = []
-        
-        if source not in validSources:
-            return "\"{}\" not a valid source.".format(source)
-        
+def parse_interval_input(search):
+#     EXAMPLE
+#     Input = "1:100-2000 2:100-2000 3:100-2000 1:1030-2000 in rn6"
+#     Out = [[u'1:100-2000', u'rn6'], [u'2:100-2000', u'rn6'], [u'3:100-2000', u'rn6'], [u'1:1030-2000', u'rn6']])
+    currentChromosome = ""
+    intervals = search.replace(",", "").replace("c", "").replace("h", "").replace("r", "").replace("o", "").replace("m", "").split()[:-2]
+    ref_genome = str(search.split()[-1].lower())
+    cleaned_intervals = []
+    
+    for interval in intervals:
         try:
-            for i in re.split('\W+',Input):
-                if len(intervals) > maxIntervals:
-                    return "Max interval exceeded, please convert to file format and proceed."
-
-                if i[0:3].lower() == "chr":
-                    if currentInterval == []:
-                        currentInterval.append(str(i))
-                    else:
-                        return "Incomplete interval detected in input."
-
-                elif i.isdigit():
-                    if len(currentInterval) == 0: #digit without chr 
-                        if len(intervals) != 0:
-                            currentInterval = [intervals[-1][0],int(i)]
-                        else:
-                            return "Interval entered without a chromosome specified."
-                    elif len(currentInterval) == 1: # lower bound
-                        currentInterval.append(int(i))
-                    elif len(currentInterval) == 2: # chr lower and upper now complete
-                        currentInterval.append(int(i))
-                        currentInterval.append(source)
-                        #check bounding
-                        if int(currentInterval[1]) > int(currentInterval[2]):
-                            return "Interval found with lower bound greater than upper bound."
-                        elif chrBound[currentInterval[0]] < int(currentInterval[1]):
-                            return "Lower bound out of chromosome range."
-                        elif chrBound[currentInterval[0]] < int(currentInterval[2]):
-                            return "Upper bound out of chromosome range(upper bound for {} is {}).".format(currentInterval[0],chrBound[currentInterval[0]])
-                        elif int(currentInterval[2])-int(currentInterval[1])>maxIntervalSize:
-                            return "Max interval size that can be proccessed is {}, try file input for larger intervals.".format(maxIntervalSize)
-                        elif currentInterval not in intervals:
-                            intervals.append(currentInterval)
-                            currentInterval = []
-
-            if len(intervals) == 0:
-                return "No valid intervals entered."
-
-            intervals.sort(key = lambda x : (x[0], x[1]))
-            
-            return intervals
+            chrom = interval.split(":")[0]
+            bounds = interval.split(":")[1]
+            lower = bounds.split("-")[0]
+            upper = bounds.split("-")[1]
         except:
-            return "Incorrect input formatting."
+            return "interval {} does not meet formating guidelines of __:__-__".format(interval)
 
-class giggle:
+        if ":" not in interval or "-" not in interval:
+            return "parser detects that this query is missing : or -"
+        elif not chrom.isdigit():
+            return "unable to find a valid chromosome number on interval {}".format(interval)
+        elif not lower.isdigit():
+            return "unable to find a valid lower bound on interval {}".format(interval)
+        elif not upper.isdigit():
+            return "unable to find a valid upper bound on interval {}".format(interval)
 
-    def __init__(self):
-        pass
+        if int(lower) > int(upper):
+            return "interval, {}, has lower bound greater than upper bound".format(interval)
 
-    def single_overlap(self,data):
-        interface = giggleUrl+'{}?region={}:{}-{}'
-        region = data[0]
-        lowerBound = data[1]
-        upperBound = data[2]
-        source = data[3]
+        if int(upper)-int(lower) > app.config["MAX_INTERVAL_SIZE"] :
+                return "max interval size that can be proccessed is {}, try file input for larger intervals.".format(app.config["MAX_INTERVAL_SIZE"])
 
-        start_task = time.time()
-        url = interface.format(source.lower(), region, lowerBound, upperBound)
-        print(url)
-        val = requests.get(url)
-        print("##")
-        print("Giggle REQUEST + RETURN ({} seconds)".format(time.time() - start_task))
+        cleaned_intervals.append([chrom + ":" + lower + "-" + upper, ref_genome]) 
+
+    if len(cleaned_intervals) == 0:
+        return "no valid intervals entered"
+
+    if len(cleaned_intervals) > app.config["MAX_INTERVALS"]:
+            return "max number of intervals exceeded (>{})".format(app.config["MAX_INTERVALS"])
+    
+    print(cleaned_intervals)
+    return cleaned_intervals
+
+
+def clean_file_name(file_name):
+    return file_name.split("/")[-1].split(".")[0]
+
+def interval_search(ref_genome, chrom, lower, upper):
+    try:
+        out_file_name = str(random.randint(0,sys.maxsize)) + '.csv'
+        cmd = "(cd {} ; python3 query_indices.py --qi {}:{}-{} {} {})".format(app.config["SERVER_PATH"], chrom, lower, upper, ref_genome, out_file_name)
+        proc = subprocess.check_output(cmd,
+                                    stderr=None,
+                                    shell=True,
+                                    timeout=app.config["TIMEOUT"])
+
+        result_df = pd.read_csv(app.config["SERVER_PATH"] + "/" + out_file_name, index_col = False)
+        result_df["name"] = result_df["file"].apply(clean_file_name)
+
+        cmd = "(cd {} ; rm {})".format(app.config["SERVER_PATH"], out_file_name)
+        proc = subprocess.check_output(cmd,
+                                    stderr=None,
+                                    shell=True,
+                                    timeout=app.config["TIMEOUT"])
+
+        return result_df[result_df["overlaps"] > 0]
+
+    except subprocess.TimeoutExpired as e:
+        print('Time Out')
+        logger.error("Time limit for current request exceed.")
+        return 'Time limit for current request exceed.'
+
+    except Exception as e:
+        return str(e)
+
+
+def file_search(process_id, ref_genome, file_name):
+    try:
+        out_file_name = "outputs/" + str(random.randint(0,sys.maxsize)) + '.csv'
+        cmd = "(cd {};  python3 query_indices.py --qf uploads/{} {} {})".format(app.config["SERVER_PATH"], process_id + file_name.split(".", 1)[-1], ref_genome, out_file_name)
+        proc = subprocess.check_output(cmd,
+                                     stderr=None,
+                                     shell=True,
+                                     timeout=app.config["TIMEOUT"])
+        result_df = pd.read_csv(app.config["SERVER_PATH"] + "/" + out_file_name, index_col = False)
+
+        cmd = "(cd {} ; rm {})".format(app.config["SERVER_PATH"], out_file_name)
+        proc = subprocess.check_output(cmd,
+                                    stderr=None,
+                                    shell=True,
+                                    timeout=app.config["TIMEOUT"])
+
+        cmd = "(cd {} ; rm uploads/{})".format(app.config["SERVER_PATH"], process_id + file_name.split(".", 1)[-1])
+        proc = subprocess.check_output(cmd,
+                                    stderr=None,
+                                    shell=True,
+                                    timeout=app.config["TIMEOUT"])
         
-        start_task = time.time()
-        soup = bs(val.text,"lxml")
-        text = soup.text.split('\n') 
-        results = []
-        for i in range(0,len(text)-1):
-            temp = text[i].split("\t")
-            split = temp[0].split("/")
-            temp[1] = int(temp[1])
-            temp[2] = int(temp[2])
-            if temp[2] > 0:
-                if len(split) == 2 :
-                    temp[0] = split[1]
+        result_df["name"] = result_df["file"].apply(clean_file_name)
 
-                temp[0] = temp[0].split(".bed.gz")[0]
-                if temp[0][-4:] != "Link":
-                    results.append(temp)
-        print("####")
-        print("STIX OVERLAPPING REGIONS PARSED ({} seconds)".format(time.time() - start_task))
-        return results
+        return result_df[result_df["overlaps"] > 0]
 
-    def fileUpload(self,filename):
-        interface = giggleUrl+'filepost'
-        start_task = time.time()
-        url = interface.format(source.lower(), region, lowerBound, upperBound)
-        print(url)
-        with open(filename, 'rb') as f:
-            request = requests.post('http://httpbin.org/post', files={'report.xls': f})
-        print("##")
-        print("Giggle REQUEST + RETURN ({} seconds)".format(time.time() - start_task))
+    except subprocess.TimeoutExpired as e:
+        print('Time Out')
+        logger.error("Time limit for current request exceed.")
+        return 'Time limit for current request exceed.'
+
+    except Exception as e:
+        return str(e)
+
+def retrieve_metadata(ref_genome):
+    try:
+        out_file_name = "outputs/" + str(random.randint(0,sys.maxsize)) + '.csv'
+        cmd = "(cd {};  python3 query_indices.py -f {} {})".format(app.config["SERVER_PATH"], ref_genome, out_file_name)
+        print(cmd)
+        proc = subprocess.check_output(cmd,
+                                     stderr=None,
+                                     shell=True,
+                                     timeout=app.config["TIMEOUT"])
         
-        soup = bs(request.text,"lxml")
-        text = soup.text.split('\n') 
+        metadata_df = pd.read_csv(app.config["SERVER_PATH"] + "/" + out_file_name, index_col = False)
 
-        return text
+        cmd = "(cd {} ; rm {})".format(app.config["SERVER_PATH"], out_file_name)
+        proc = subprocess.check_output(cmd,
+                                    stderr=None,
+                                    shell=True,
+                                    timeout=app.config["TIMEOUT"])
 
-class UCSC:
-    def __init__(self):
-        pass
+        return metadata_df
 
-    def getUCSCData(self, results):
-        start_task = time.time()
-        tablename = "hg19"
-        with connect_SQL_db(app.config["UCSC_SQL_DB_HOST"], "genome") as db:
-            df_metadata = pd.read_sql("SELECT tableName, shortLabel, longLabel, html from {}.trackDb order by tableName".format(tablename), con=db)
-            print(df_metadata)
-            df_results = pd.DataFrame(results, columns=["tableName","regionsize","overlap"])
-            result = pd.merge(df_results, df_metadata, how='inner', on='tableName')
-        result = result.fillna("")
-        result = result.values.tolist()
+    except subprocess.TimeoutExpired as e:
+        print('Time Out')
+        logger.error("Time limit for current request exceed.")
+        return 'Time limit for current request exceed.'
 
-        for data in result:
-            data[5] = data[5].decode('latin-1') 
-            if data[5] != "":
-                data.append(self.getUCSCdescription(data[5]))
-            else:
-                data.append("")
+    except Exception as e:
+        return str(e)
 
-        end_task = time.time()
-        print("One Query with Pandas:", end_task - start_task)
-        return result
 
-    def getUCSCdescription(self, html):
-        # Format of descriptions <H3>Description</H3> <P> ... <P> <h2>Description</h2> <p>
-        if "Description" in html:
-            result = re.search('^[ \t]*<[hH]{1}[0-9]{1}>[ \t]*Description[ \t]*<\/[hH]{1}[0-9]{1}>(.*?)<[pP]{1}>[ \t]*(.*?)<\/[pP]{1}>', html, flags = re.DOTALL)
-            if result != None:
-                htmldescr = result.group(0)
-                index = htmldescr.find("<P>")
-                if index == -1:
-                    index = htmldescr.find("<p>")
-                return htmldescr[index:len(htmldescr)]
-        return ""

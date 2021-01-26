@@ -18,11 +18,11 @@
       <div class="form-group row ">
         <div class="col-sm-1"></div>
         <div class="col-md-auto">
-          <H3 style=font-size:40px id="gigglelogo"> <a href="/search"><img src="/static/gigglelogo.png" width = "80px" style = "padding-bottom: 5px;" alt="Gi"><font color = "#a4a5a6" style = "font-family:Times New Roman; ">ggle</font></a></H3>
+          <H3 style=font-size:40px id="gigglelogo"> <a href="{{ url_for('home') }}"><img src="/static/gigglelogo.png" width = "80px" style = "padding-bottom: 5px;" alt="Gi"><font color = "#a4a5a6" style = "font-family:Times New Roman; ">ggle</font></a></H3>
         </div>
           <div class="col-md-5">
             <br>
-            <input class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="{{identifier[0]}}:{{identifier[1]}}-{{identifier[2]}} from {{source}}">
+            <input class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="{{current_interval[0]}} in {{current_interval[1]}}">
           </div>
           <div class="col-md-2 ">
             <br>
@@ -148,54 +148,50 @@
         document.getElementById("searchform").style.display="none";
         document.getElementById("mainpage").style.display="none";
         document.getElementById("paginationTable").style.display="none";
-        
-
         document.getElementById("IntervalViz").style.display="none";
 
       }
       
       function displayIntervals(chromosome="None") {
         var intervals = {{sessionIntervals|tojson}};
-        var currentIntv = {{identifier|tojson}};
+        var current_interval = {{current_interval_split|tojson}};
+        var num_intervals = intervals.length;
         var chrdropdown = "";
         var intervalBars = "";
         var barpercent = 0;
         
-        if (chromosome == "None"){
-          chromosome = currentIntv[0];
-        }
+        if (chromosome == "None"){ chromosome = current_interval[0];}
         var listedIntv = [chromosome];
 
-        if (intervals.length > 1){ 
-          //"{{identifier[0]}}:{{identifier[1]}}-{{identifier[2]}} from {{source}}"
+        if ( num_intervals > 1){ 
           //fill in chromosome dropdown
-          for (i = 0 ; i < intervals.length; i++) {
+          for (i = 0 ; i < num_intervals; i++) {
             if (!listedIntv.includes(intervals[i][0])){
-            chrdropdown += "<a class=\"dropdown-item\" onclick=\"displayIntervals('"+intervals[i][0]+"');\">"+intervals[i][0]+"</a>";
-            listedIntv.push(intervals[i][0]);
+              chrdropdown += "<a class=\"dropdown-item\" onclick=\"displayIntervals("+intervals[i][0]+");\">"+intervals[i][0]+"</a>";
+              listedIntv.push(intervals[i][0]);
             }
-            if (chromosome == intervals[i][0]){
-              barpercent += 1
+            if (chromosome == intervals[i][0]){ barpercent += 1}
             }
-          }
-          document.getElementById("dropDownChrs").innerHTML = chrdropdown;
-          document.getElementById("dropDownCurrentChr").innerHTML = chromosome;
+          
           barpercent = 100/(barpercent);
           intervalBars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:  2%; background-color:rgba(255, 0, 0,0) !important;\" aria-valuenow=\"15\" aria-valuemin=\"0\" aria-valuemax=\"100\"></div>";
 
-          for (i = 0 ; i < intervals.length; i++) {
-            if (intervals[i][1]== currentIntv[1] && intervals[i][2]== currentIntv[2] && intervals[i][0] == currentIntv[0] && chromosome == intervals[i][0]){
+          for (i = 0 ; i < num_intervals; i++) {
+            // if current interval selected
+            if (intervals[i][1]== current_interval[1] && intervals[i][2]== current_interval[2] && intervals[i][0] == current_interval[0] && chromosome == intervals[i][0]){
               intervalBars += ("<div class=\"progress-bar\" role=\"progressbar\" style=\"width: "+ parseInt(barpercent-2) + "%; background-color:#144177 !important;\" aria-valuenow=\"15\" aria-valuemin=\"0\" aria-valuemax=\"100\">"+intervals[i][1]+":"+intervals[i][2]+"</div>");
               intervalBars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:  2%; background-color:rgba(255, 0, 0,0) !important;\" aria-valuenow=\"15\" aria-valuemin=\"0\" aria-valuemax=\"100\"></div>";
-            }else if (chromosome == intervals[i][0]){
+            }else if (chromosome == intervals[i][0]){ // none current interval on current chromosome
               intervalBars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width: "+ parseInt(barpercent-2) + "%; background-color:grey!important;\" aria-valuenow=\"15\" aria-valuemin=\"0\" aria-valuemax=\"100\">"
-              intervalBars += "<a style=\"color:#ffffff;\" href=\"/search?" + intervals[i][3]+"/"+intervals[i][0]+":"+intervals[i][1]+"-"+intervals[i][2]+"\">"
+              intervalBars += "<a style=\"color:#ffffff;\" href=\"/search/" + intervals[i][3]+"/"+intervals[i][0]+":"+intervals[i][1]+"-"+intervals[i][2]+"\">"
               intervalBars += intervals[i][1]+":"+intervals[i][2]+"</a></div>";
               intervalBars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:  2%; background-color:rgba(255, 0, 0,0) !important;\" aria-valuenow=\"15\" aria-valuemin=\"0\" aria-valuemax=\"100\"></div>";
             }
 
           }
           document.getElementById("intervalViz").innerHTML = intervalBars;
+          document.getElementById("dropDownChrs").innerHTML = chrdropdown;
+          document.getElementById("dropDownCurrentChr").innerHTML = chromosome;
           
         }else{
           document.getElementById("IntervalVizDropdown").style.display = "none";
@@ -210,11 +206,11 @@
       function browserLink(num){
         var results = {{results|tojson}};
         var source = {{source|tojson}};
-        var identifier = {{identifier|tojson}};
+        var current_interval = {{current_interval_split|tojson}};
         var link = "#";
         if (source == "UCSC"){
           link = "http://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&hideTracks=1"
-          link += "&position=" + identifier[0] + ":" + identifier[1] + "-" + identifier[2];
+          link += "&position=" + current_interval_split[0] ;
           //Build link 
           for (i=0; i<num; i++ ) {
             link += "&" + results[i][0] +"=squish"
@@ -316,23 +312,25 @@
         document.getElementById("paginationTable").innerHTML = newPages;
       }
     
-      function intervalBars(){
-        var intervals = {{sessionIntervals|tojson}};
-        var bars = "<div class= \"row\"><div class=\"col\"><div class=\"progress\" style=\"height: 30px;\"> ";
-        if (intervals.length > 1){
-          for (i = 0 ; i < intervals.length; i++) {
-            if (i==0|| intervals[i][0].localeCompare(intervals[i-1][0]) ){
+      // function intervalBars(){
+      //   var intervals = {{sessionIntervals|tojson}};
+      //   console.log(intervals)
+      //   var num_intervals = intervals.length;
+      //   var bars = "<div class= \"row\"><div class=\"col\"><div class=\"progress\" style=\"height: 30px;\"> ";
+      //   if (num_intervals > 1){
+      //     for (i = 0 ; i < num_intervals; i++) {
+      //       if (i==0|| intervals[i][0].localeCompare(intervals[i-1][0]) ){
     
-              bars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:40px; background-color:rgb(177, 36, 1) !important;\">" + intervals[i][0] + "</div>";
-            }
-            bars += "<div class=\"progress-bar progress-bar-success\" role=\"progressbar\" style=\"width:2px; background-color:rgb(250, 250, 250) !important;\"></div> </a>";
-            bars += "<a href=\""+"/search?"+intervals[i][3]+"/"+intervals[i][0]+":"+intervals[i][1]+"-"+intervals[i][2]+"\">";
-            bars += "<div class=\"progress-bar progress-bar-success\" role=\"progressbar\" style=\"width:"+parseInt((intervals[i][1].toString().length+intervals[i][2].toString().length)*12)+"px;background-color:rgb(20, 65, 119) !important;\">" + intervals[i][1] + ":" + intervals[i][2] + "</div> </a>";
+      //         bars += "<div class=\"progress-bar\" role=\"progressbar\" style=\"width:40px; background-color:rgb(177, 36, 1) !important;\">" + intervals[i][0] + "</div>";
+      //       }
+      //       bars += "<div class=\"progress-bar progress-bar-success\" role=\"progressbar\" style=\"width:2px; background-color:rgb(250, 250, 250) !important;\"></div> </a>";
+      //       bars += "<a href=\""+"/search?"+intervals[i][3]+"/"+intervals[i][0]+":"+intervals[i][1]+"-"+intervals[i][2]+"\">";
+      //       bars += "<div class=\"progress-bar progress-bar-success\" role=\"progressbar\" style=\"width:"+parseInt((intervals[i][1].toString().length+intervals[i][2].toString().length)*12)+"px;background-color:rgb(20, 65, 119) !important;\">" + intervals[i][1] + ":" + intervals[i][2] + "</div> </a>";
             
-          }
-        }
-        document.getElementById("multipleInterval").innerHTML = bars+"</div></div></div>";
-      }
+      //     }
+      //   }
+      //   document.getElementById("multipleInterval").innerHTML = bars+"</div></div></div>";
+      // }
     
     </script>
 </html>

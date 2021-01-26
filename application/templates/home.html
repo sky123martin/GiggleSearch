@@ -35,7 +35,7 @@
       </div>
 
 <div id="fileSection" style = "display:none;">
-  {% if error != "" %}
+  {% if error != ""  or error == null %}
     <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post" enctype="multipart/form-data">
     {% else %} 
     <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post" enctype="multipart/form-data">
@@ -44,20 +44,20 @@
     <div class="form-group row justify-content-md-center">
         <div class="col-md-auto">
             <div class="btn-group" id = "fileform">
-                {{ fileform.file }}
+              <input type="text" placeholder = "" name="reference genome" size="11" required>  Reference Genome<br>
+              {{ fileform.file }}
                 <br>
-                <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" >&#9432;</button>
+                <!-- <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" >&#9432;</button> -->
                 <button type="submit" onclick="fileloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
-                    
+                {{ fileform.csrf_token }}    
               </div>
-          {{ fileform.csrf_token }}
         </div>
       </div>     
     </form>
   </div>
 
   <div id="intervalSection">
-    {% if error != "" %}
+    {% if error != "" or error == null %}
     <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post">
     {% else %} 
       <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
@@ -79,7 +79,7 @@
           <div class="form-group row justify-content-md-center">
             <div class="col-md-auto">
                 <div class="btn-group" id = "intervalform">
-                  <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" >&#9432;</button>
+                  <!-- <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" >&#9432;</button> -->
                     <button type="submit" onclick="intervalloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
                   </div>
               {{ intervalform.csrf_token }}

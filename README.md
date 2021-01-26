@@ -2,7 +2,7 @@
 Extension of Giggle to search overlapping data and connect to the UCSC gene browser with a smart view.
 
 ### First Time Setup:
-We will need to install python packages and create an virtual enviroment in order to host giggle search locally.
+We will need to install python packages and create an virtual enviroment in order to host giggle search locally. Be sure to have conda and pip installed and updated.
 
 1. Install pip (package manager)
 
@@ -13,40 +13,39 @@ We will need to install python packages and create an virtual enviroment in orde
     rm get-pip.py
     ```
 
-2. Create Virtual Enviorment
+2. Create and Activate Virtual Enviorment
 
-    On macOS and Linux:
-    ```unix
-    python3 -m venv env
+    ```
+    conda install anaconda
+
+    conda create -n search_env python=3
+
+    conda activate search_env
     ```
 
-3. Activate Virtual Enviorment
-
-    On macOS and Linux:
-    ```unix
-    source ./env/bin/activate 
+    Install necessary python libararies
+    ```
+    conda install --file requirements.txt
     ```
 
-4. Install Requirments
+
+4. Install Requirements
 
     ```unix
-    pip install -r requirements.txt
+    conda install --file requirements.txt
+    pip3 install -r <path to server>/requirements.txt 
+    e.g. pip3 install -r ../GiggleIndexServer/requirements.txt
     ```
 
 5. Run Application
     ```unix
     export FLASK_APP=main.py
-    python -m flask run
+    flask run
     ```
 
 6. Exit Enviorment
     ```unix
-    deactivate
-    ```
-
-7. Delete Enviorment (optional)
-    ```unix
-    rm -rf env
+    conda deactivate
     ```
 
 
@@ -57,15 +56,15 @@ Instructions if you have already configured env.
 
     On macOS and Linux:
     ```unix
-    source env/bin/activate
+    conda activate search_env
     ```
 
 2. Run Application
     ```unix
-    export FLASK_APP=app
+    export FLASK_APP=main.py
     flask run
     ```
 3. Exit Enviorment
     ```unix
-    deactivate
+    conda deactivate
     ```
