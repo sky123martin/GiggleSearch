@@ -142,7 +142,7 @@
         for (j = (p-1)*10 ; j < upperBound ; j++) {
           newTable += "<tr><td>";
           if (results[j][3] == "" && results[j][4] == "" && results[j][7]) {
-            newTable += "<h5> <font color=\"#144177\">" + results[j][0] + "</font> </h5> <h6><font color=\"#7fcdbb\"> Fisher's Combo Score: " + results[j][7] + "  -  Overlap: " + results[j][2] + "  -  Region Size: " + results[j][1] + " </font></h6>";
+            newTable += "<h5> <font color=\"#144177\">" + results[j][0] + "</font> </h5> <h6><font color=\"#7fcdbb\"> Fisher's Combo Score: " + results[j][8] + "  -  Overlap: " + results[j][2] + "  -  Region Size: " + results[j][1] + " </font></h6>";
           } else if (results[j][5] == "") {
             newTable += "<h5> <font color=\"#144177\">" + results[j][3] + " : " + results[j][4] + "</font> </h5> <h6><font color=\"#7fcdbb\"> Overlap: " + results[j][2] + "  -  Region Size: " + results[j][1] + " - Table Name: " + results[j][0] + " </font></h6>";
           } else {

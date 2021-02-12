@@ -16,4 +16,4 @@ class Config(object):
 
 
     MAX_INTERVALS = 20
-    MAX_INTERVAL_SIZE = 30000 # Base pairs
+    MAX_INTERVAL_SIZE = 1000000000 # Base pairs

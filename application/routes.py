@@ -156,7 +156,7 @@ def fileResult(process_id, ref_genome, file_name):
     result_df.reset_index(inplace=True)
     print(result_df.columns)
 
-    result_df = result_df.fillna("").sort_values("fishers_two_tail")# FIX ME SHOULD this be asc
+    result_df = result_df.fillna("").sort_values("combo_score", ascending=False)# FIX ME SHOULD this be asc
     results = result_df[["NAME", "file_size", "overlaps", "SHORTNAME", "LONGNAME", "LONGINFO", "SHORTINFO", "index", "combo_score"]].to_numpy()
 
     return render_template('file_result.html',
