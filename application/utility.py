@@ -14,13 +14,25 @@ import math
 import re
 import requests 
 
-def parse_interval_input(search):
+def retrieve_genomes():
+    try:
+        result_df = pd.read_csv("{}/outputs/genomes.csv".format(app.config["SERVER_PATH"]), index_col = False)
+        return result_df
+
+    except subprocess.TimeoutExpired as e:
+        print('Time Out')
+        logger.error("Time limit for current request exceed.")
+        return 'Time limit for current request exceed.'
+
+    except Exception as e:
+        return str(e)
+
+def parse_interval_input(search, ref_genome):
 #     EXAMPLE
 #     Input = "1:100-2000 2:100-2000 3:100-2000 1:1030-2000 in rn6"
 #     Out = [[u'1:100-2000', u'rn6'], [u'2:100-2000', u'rn6'], [u'3:100-2000', u'rn6'], [u'1:1030-2000', u'rn6']])
     currentChromosome = ""
     intervals = search.replace(",", "").replace("c", "").replace("h", "").replace("r", "").replace("o", "").replace("m", "").split()[:-2]
-    ref_genome = str(search.split()[-1].lower())
     cleaned_intervals = []
     
     for interval in intervals:
@@ -55,24 +67,20 @@ def parse_interval_input(search):
     if len(cleaned_intervals) > app.config["MAX_INTERVALS"]:
             return "max number of intervals exceeded (>{})".format(app.config["MAX_INTERVALS"])
     
-    print(cleaned_intervals)
     return cleaned_intervals
 
-
-def clean_file_name(file_name):
-    return file_name.split("/")[-1].split(".")[0]
 
 def interval_search(ref_genome, chrom, lower, upper):
     try:
         out_file_name = str(random.randint(0,sys.maxsize)) + '.csv'
-        cmd = "(cd {} ; python3 query_indices.py --qi {}:{}-{} {} {})".format(app.config["SERVER_PATH"], chrom, lower, upper, ref_genome, out_file_name)
+        cmd = "(cd {} ; python3 query_indices.py --qi {}:{}-{} {} {} True)".format(app.config["SERVER_PATH"], chrom, lower, upper, ref_genome, out_file_name)
         proc = subprocess.check_output(cmd,
                                     stderr=None,
                                     shell=True,
                                     timeout=app.config["TIMEOUT"])
 
         result_df = pd.read_csv(app.config["SERVER_PATH"] + "/" + out_file_name, index_col = False)
-        result_df["name"] = result_df["file"].apply(clean_file_name)
+        result_df["name"] = result_df["FILEID"]
 
         cmd = "(cd {} ; rm {})".format(app.config["SERVER_PATH"], out_file_name)
         proc = subprocess.check_output(cmd,
@@ -83,8 +91,7 @@ def interval_search(ref_genome, chrom, lower, upper):
         return result_df[result_df["overlaps"] > 0]
 
     except subprocess.TimeoutExpired as e:
-        print('Time Out')
-        logger.error("Time limit for current request exceed.")
+        print("Time limit for current request exceed.")
         return 'Time limit for current request exceed.'
 
     except Exception as e:
@@ -94,7 +101,7 @@ def interval_search(ref_genome, chrom, lower, upper):
 def file_search(process_id, ref_genome, file_name):
     try:
         out_file_name = "outputs/" + str(random.randint(0,sys.maxsize)) + '.csv'
-        cmd = "(cd {};  python3 query_indices.py --qf uploads/{} {} {})".format(app.config["SERVER_PATH"], process_id + file_name.split(".", 1)[-1], ref_genome, out_file_name)
+        cmd = "(cd {};  python3 query_indices.py --qf uploads/{}.{} {} {} True)".format(app.config["SERVER_PATH"], process_id, file_name.split(".", 1)[-1], ref_genome, out_file_name)
         proc = subprocess.check_output(cmd,
                                      stderr=None,
                                      shell=True,
@@ -107,19 +114,18 @@ def file_search(process_id, ref_genome, file_name):
                                     shell=True,
                                     timeout=app.config["TIMEOUT"])
 
-        cmd = "(cd {} ; rm uploads/{})".format(app.config["SERVER_PATH"], process_id + file_name.split(".", 1)[-1])
+        cmd = "(cd {} ; rm uploads/{}.{})".format(app.config["SERVER_PATH"], process_id, file_name.split(".", 1)[-1])
         proc = subprocess.check_output(cmd,
                                     stderr=None,
                                     shell=True,
                                     timeout=app.config["TIMEOUT"])
         
-        result_df["name"] = result_df["file"].apply(clean_file_name)
+        result_df["name"] = result_df["FILEID"]
 
         return result_df[result_df["overlaps"] > 0]
 
     except subprocess.TimeoutExpired as e:
-        print('Time Out')
-        logger.error("Time limit for current request exceed.")
+        print("Time limit for current request exceed.")
         return 'Time limit for current request exceed.'
 
     except Exception as e:

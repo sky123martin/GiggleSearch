@@ -23,11 +23,6 @@ We will need to install python packages and create an virtual enviroment in orde
     conda activate search_env
     ```
 
-    Install necessary python libararies
-    ```
-    conda install --file requirements.txt
-    ```
-
 
 4. Install Requirements
 

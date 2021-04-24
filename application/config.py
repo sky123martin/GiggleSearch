@@ -14,6 +14,9 @@ class Config(object):
 
     TIMEOUT = 100
 
-
+    # restrictions for interval input
     MAX_INTERVALS = 20
     MAX_INTERVAL_SIZE = 1000000000 # Base pairs
+
+    # restrictions for interval input
+    ACCEPTED_FILE_FORMATS = [".bed.gz"]

@@ -23,24 +23,28 @@ from application import utility
 def home(error = ""):
     intervalform = intervalForm()
     fileform = fileForm(CombinedMultiDict((request.files, request.form)))
+    genomes = utility.retrieve_genomes()
+    genomes = genomes["GENOME"].unique()
 
     # interval search
     if request.method == 'POST' and intervalform.validate_on_submit() and error == "":
-        print("Recieved Input:", intervalform.Input.data)
-        out = utility.parse_interval_input(intervalform.Input.data)
+        print("Recieved Input:", intervalform.interval.data, intervalform.refGenome.data)
+        if intervalform.refGenome.data=="": # parsing error occured
+            return home("select reference genome")
+        out = utility.parse_interval_input(intervalform.interval.data, intervalform.refGenome.data)
         if isinstance(out, str): # parsing error occured
-            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = out)
+            return home(out)
         else:
             session['intervals'] = [[int(i[0].split(":")[0]), int(i[0].split(":")[1].split("-")[0]), int(i[0].split(":")[1].split("-")[1]), i[1]] for i in out]
             session["LenIntervals"] = len(out)
-            return redirect("/search/{}/{}".format(out[0][1],out[0][0]))   
+            return redirect("/search/{}/{}".format(intervalform.refGenome.data,out[0][0]))   
 
     # file search
-    elif request.method == 'POST' and error == "": #fileform.validate_on_submit() and 
+    elif request.method == 'POST' and error == "": # and 
         filename = secure_filename(fileform.file.data.filename)
         # check if the post request has the file part
         if 'file' not in request.files:
-            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = "No selected file")
+            return home("No selected file")
         
         result = request.form
         ref_genome = result['reference genome']
@@ -48,18 +52,22 @@ def home(error = ""):
         file = request.files['file']
 
         if file.filename == '':
-            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = "No selected file")
+            return home("No selected file")
        
         if ref_genome == "":
-            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = "No reference genome")
+            return home("No reference genome")
 
+        if file.filename.split(".",1)[-1] not in app.config["ACCEPTED_FILE_FORMATS"]:
+            return home("File {} is not an acceptable file format, accepted types:{}".format(file.filename, app.config["ACCEPTED_FILE_FORMATS"]))
+
+        print("Recieved Input:",ref_genome, file.filename)
         if file:
             file_name = secure_filename(file.filename)
             process_id = str(random.randint(0,sys.maxsize))
-            file.save(app.config["SERVER_PATH"] +  "/uploads/" + str(process_id) + file_name.split(".", 1)[-1])
+            file.save(app.config["SERVER_PATH"] +  "/uploads/" + str(process_id) + "." + file_name.split(".", 1)[-1])
             return redirect("/search/{}/{}/{}".format(process_id, ref_genome, file_name))   
 
-    return render_template('home.html', fileform = fileform, intervalform = intervalform, error = error)
+    return render_template('home.html', fileform = fileform, intervalform = intervalform, genomes = genomes, error = error)
 
 @app.route("/search/<string:process_id>/<string:ref_genome>/<string:file_name>", methods=['GET', 'POST'])
 def fileResult(process_id, ref_genome, file_name):
@@ -71,7 +79,7 @@ def fileResult(process_id, ref_genome, file_name):
         filename = secure_filename(fileform.file.data.filename)
         # check if the post request has the file part
         if 'file' not in request.files:
-            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = "No selected file")
+            return home("No selected file")
         
         result = request.form
         ref_genome = result['reference genome']
@@ -79,10 +87,10 @@ def fileResult(process_id, ref_genome, file_name):
         file = request.files['file']
 
         if file.filename == '':
-            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = "No selected file")
+            return home("No selected file")
     
         if ref_genome == "":
-            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = "No reference genome")
+            return home("No reference genome")
 
         if file:
             file_name = secure_filename(file.filename)
@@ -97,7 +105,7 @@ def fileResult(process_id, ref_genome, file_name):
     start_task = time.time()
     
     if isinstance(out, str): # parsing error occured
-        return render_template('home.html', fileform = fileform, intervalform = intervalform, error = out)
+        return home(out)
     else:
         result_df = out
 
@@ -110,7 +118,7 @@ def fileResult(process_id, ref_genome, file_name):
 
     out = utility.retrieve_metadata(ref_genome) #generic function to handle data information gathering
     if isinstance(out, str): # parsing error occured
-        return render_template('home.html', fileform = fileform, intervalform = intervalform, error = out)
+        return home(out)
     else:
         metadata_df = out
 
@@ -186,7 +194,7 @@ def intervalResult(ref_genome, chrom, lower, upper):
     if form.validate_on_submit():
         out = utility.parse_interval_input(form.Input.data)
         if isinstance(out, str): # parsing error occured
-            return render_template('home.html', fileform = fileform, intervalform = intervalform, error = out)
+            return home(error = out)
         else:
             session['intervals'] = [[int(i[0].split(":")[0]), int(i[0].split(":")[1].split("-")[0]), int(i[0].split(":")[1].split("-")[1]), i[1]] for i in out]
             return redirect("/result/{}/{}".format(out[0][1], out[0][0]))
@@ -209,17 +217,17 @@ def intervalResult(ref_genome, chrom, lower, upper):
     # make array of links for pages
     start_task = time.time()
 
-    out = utility.retrieve_metadata(ref_genome) #generic function to handle data information gathering
-    if isinstance(out, str): # parsing error occured
-        return render_template('home.html', fileform = fileform, intervalform = intervalform, error = out)
-    else:
-        metadata_df = out
+    # out = utility.retrieve_metadata(ref_genome) #generic function to handle data information gathering
+    # if isinstance(out, str): # parsing error occured
+    #     return render_template('home.html', fileform = fileform, intervalform = intervalform, error = out)
+    # else:
+    #     metadata_df = out
 
-    result_df = pd.merge(result_df,
-                         metadata_df,
-                         left_on ="name",
-                         right_on ="NAME",
-                         how ="left")
+    # result_df = pd.merge(result_df,
+    #                      metadata_df,
+    #                      left_on ="name",
+    #                      right_on ="NAME",
+    #                      how ="left")
     print(result_df)
     result_df.sort_values("overlaps", ascending=False, inplace=True)
 
@@ -257,7 +265,7 @@ def intervalResult(ref_genome, chrom, lower, upper):
     result_df.reset_index(inplace=True)
     print(result_df.columns)
     result_df = result_df.fillna("")
-    results = result_df[["NAME", "size", "overlaps", "SHORTNAME", "LONGNAME", "LONGINFO", "SHORTINFO", "index"]].to_numpy()
+    results = result_df[["FILEID", "size", "overlaps", "SHORTNAME", "LONGNAME", "LONGINFO", "SHORTINFO", "index"]].to_numpy()
 
     print(session.get('intervals', None))
     return render_template('interval_result.html',

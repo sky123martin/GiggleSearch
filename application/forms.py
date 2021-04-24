@@ -5,7 +5,8 @@ from flask_wtf.file import FileField, FileRequired, FileAllowed
 from flask import request
 
 class intervalForm(FlaskForm):
-    Input = StringField ('Input', validators=[DataRequired()])
+    interval = StringField ('intervals', validators=[DataRequired()])
+    refGenome = StringField ('refGenome')
     submit = SubmitField('Search For Overlapping Intervals')
 
 class Search(FlaskForm):

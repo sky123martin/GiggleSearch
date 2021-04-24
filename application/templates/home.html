@@ -6,10 +6,6 @@
     <title>Giggle Search</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <script src="jquery-3.4.1.min.js"></script>
 
   </head>
 
@@ -41,14 +37,24 @@
     <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post" enctype="multipart/form-data">
     {% endif %}
 
+    <div class="form-group row justify-content-md-center" >
+      <div class="col col-md-5">
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <button id = "refGenomeViewF" class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Ref Genome</button>
+            <div class="dropdown-menu" id="dropdownF">
+            </div>
+            <input id = "refGenomeF" name="reference genome" name = "interval" style="display:none;">
+          </div>
+          {{ fileform.file }}
+        </div>
+      </div>
+    </div>
+
     <div class="form-group row justify-content-md-center">
         <div class="col-md-auto">
             <div class="btn-group" id = "fileform">
-              <input type="text" placeholder = "hg19" name="reference genome" size="11" required>  Reference Genome<br>
-              {{ fileform.file }}
-                <br>
-                <!-- <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" >&#9432;</button> -->
-                <button type="submit" onclick="fileloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
+              <button type="submit" onclick="fileloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
                 {{ fileform.csrf_token }}    
               </div>
         </div>
@@ -58,28 +64,33 @@
 
   <div id="intervalSection">
     {% if error != "" or error == null %}
-    <form class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post">
+    <form id = "intervalform" class="was-validated form-justify-content-center" action="{{ url_for('home') }}" method="post">
     {% else %} 
-      <form class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
+      <form id = "intervalform" class="form-justify-content-center" action="{{ url_for('home') }}" method="post">
     {% endif %}
 
         <div class="form-group row justify-content-md-center" >
-            <div class="col col-md-6">
-              
-              {% if error != "" %}
-              <input id="manualIntervalInput" class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="chr<#>: <lower> - <upper> , (additional intervals...)  in <refgenome>" required>
-              <div class="invalid-feedback">{{error}} (click help icon for formatting rules)</div>
-              {% else %} 
-              <input id="manualIntervalInput" class="form-control form-control-md form-control-borderless" type="intervals" name="Input"  placeholder="chr<#>: <lower> - <upper> , (additional intervals...)  in <refgenome>">
-              {% endif %}
+            <div class="col col-md-5">
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <button id = "refGenomeViewI" class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Ref Genome</button>
+                  <div class="dropdown-menu" id="dropdownI"></div>
+                  <input id = "refGenomeI" name="refGenome" name = "interval" style="display:none;">
+                </div>
+                  {% if error != "" %}
+                  <input id="interval" name = "interval" style="text-align:left;" class="form-control form-control-md form-control-borderless" type="intervals" placeholder="chr<#>: <lower> - <upper> , (additional intervals...)" required>
+                  <div class="invalid-feedback">{{error}} (review 'about' tab for formatting rules)</div>
+                  {% else %} 
+                  <input id="interval" name = "interval" style="text-align:left;" class="form-control form-control-md form-control-borderless" type="intervals"  placeholder="chr<#>: <lower> - <upper> , (additional intervals...)">
+                  {% endif %}
+              </div>
             </div>
           </div>
-
+        
 
           <div class="form-group row justify-content-md-center">
             <div class="col-md-auto">
-                <div class="btn-group" id = "intervalform">
-                  <!-- <button type="button" style="color:#FFFFFF;"class="btn btn-md btn-primary mb-2  dropdown-toggle-split fa-question-circle" data-toggle="collapse" data-target="#help" aria-expanded="false" >&#9432;</button> -->
+                <div class="btn-group">
                     <button type="submit" onclick="intervalloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
                   </div>
               {{ intervalform.csrf_token }}
@@ -87,6 +98,7 @@
         </div>
     </form>
     </div>
+
 
 
   <div class="justify-content-center" id="infoSection" style = "display:none;">
@@ -153,7 +165,7 @@
                 <table class="table">
                     <tr>
                         <th>Available Reference Genome</th>
-                        <td>hg19: human genome</td>
+                        <td>{{genomes}}</td>
                     </tr>
                     <tr>
                         <th>Max Interval Width</th>
@@ -186,9 +198,44 @@
     </div>
   </div>
   </div>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script src="https://d3js.org/d3.v4.js"></script>
   
 </body>
 <script> 
+  var genomes = {{genomes| safe }};
+  genomes = genomes.sort();
+    
+  d3.select("#dropdownF")
+    .selectAll('myOptions')
+    .data(genomes)
+    .enter()
+      .append('a')
+      .attr("class", "dropdown-item")
+      .text(function (d) { return d; }) // text showed in the menu
+      .attr("value", function (d) { return d; }) // corresponding value returned by the button
+      .on("click", function(d) {
+        document.getElementById("refGenomeViewF").innerHTML = d
+        document.getElementById("refGenomeF").value = d
+      });
+
+  d3.select("#dropdownI")
+    .selectAll('myOptions')
+    .data(genomes)
+    .enter()
+      .append('a')
+      .attr("class", "dropdown-item")
+      .text(function (d) { return d; }) // text showed in the menu
+      .attr("value", function (d) { return d; }) // corresponding value returned by the button
+      .on("click", function(d) {
+        document.getElementById("refGenomeViewI").innerHTML = d
+        document.getElementById("refGenomeI").value = d
+      });
+
   function intervalloading(){
     // <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>
         document.getElementById("gigglelogo").innerHTML = "<img src=\"../static/gigglelogo.gif\" width = \"175px\" style = \"padding-bottom: 0px;\" alt=\"Gi\"> <font color=\"#a4a5a6\" style = \"font-family:Times New Roman; \" >ggle</font>";

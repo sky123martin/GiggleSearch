@@ -9,4 +9,3 @@ flask_bootstrap
 requests==2.24.0
 mysql-connector-python
 idna==2.5
-requests==2.24.0
