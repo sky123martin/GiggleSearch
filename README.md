@@ -24,6 +24,24 @@ We will need to install python packages and create an virtual enviroment in orde
 3. Setup server (follow directions https://github.com/sky123martin/GiggleIndexServer)
     ```unix
     git clone https://github.com/sky123martin/GiggleIndexServer.git
+    cd GiggleIndexServer
+    
+    git clone https://github.com/ryanlayer/giggle.git
+    
+    mkdir UCSC_utilities
+
+    cd UCSC_utilities
+
+    rsync -aP rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/macOSX.x86_64/bigWigToBedGraph ./
+
+    rsync -aP rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/macOSX.x86_64/bigBedToBed ./
+
+    rsync -aP rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/macOSX.x86_64/bigPslToPsl ./
+
+    rsync -aP rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/macOSX.x86_64/pslToBed ./
+
+    cd ..
+    cd ..
     ```
 
 4. Install Requirements
