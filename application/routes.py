@@ -71,219 +71,85 @@ def home(error = ""):
 
 @app.route("/search/<string:process_id>/<string:ref_genome>/<string:file_name>", methods=['GET', 'POST'])
 def fileResult(process_id, ref_genome, file_name):
-    form = Search()
-    intervalform = intervalForm()
-    fileform = fileForm(CombinedMultiDict((request.files, request.form)))
-
-    if request.method == 'POST' and fileform.validate_on_submit():
-        filename = secure_filename(fileform.file.data.filename)
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            return home("No selected file")
-        
-        result = request.form
-        ref_genome = result['reference genome']
-
-        file = request.files['file']
-
-        if file.filename == '':
-            return home("No selected file")
-    
-        if ref_genome == "":
-            return home("No reference genome")
-
-        if file:
-            file_name = secure_filename(file.filename)
-            process_id = str(random.randint(0,sys.maxsize))
-            file.save(app.config["SERVER_PATH"] +  "/uploads/" + str(process_id) + file_name.split(".", 1)[-1])
-            return redirect("/search/{}/{}/{}".format(process_id, ref_genome, file_name))   
-
-    out = utility.file_search(process_id, ref_genome, file_name)
-
     print("INITIATING SEARCH")
     start_total = time.time()
     start_task = time.time()
     
-    if isinstance(out, str): # parsing error occured
-        return home(out)
-    else:
-        result_df = out
+    result_df = utility.file_search(process_id, ref_genome, file_name)
+    if isinstance(result_df, str): # parsing error occured
+        return home(result_df)
 
     end_task = time.time()
     print("#####")
     print("SEARCH COMPLETED ({} seconds)".format(end_task - start_task))
 
-    # make array of links for pages
-    start_task = time.time()
+    result_df.reset_index(inplace=True)
+    result_df = result_df.fillna("").sort_values("combo_score", ascending=False)
+    result_df = result_df.to_dict(orient='records')
+    results_json = json.dumps(result_df, indent=2)
 
-    out = utility.retrieve_metadata(ref_genome) #generic function to handle data information gathering
-    if isinstance(out, str): # parsing error occured
-        return home(out)
-    else:
-        metadata_df = out
+    projects_df = utility.retrieve_projects(ref_genome)
+    if isinstance(projects_df, str): # parsing error occured
+        return home(projects_df)
 
-    result_df = pd.merge(result_df,
-                         metadata_df,
-                         left_on ="name",
-                         right_on ="NAME",
-                         how ="left")
-    print(result_df)
-    result_df.sort_values("overlaps", inplace=True)
+    projects_df = projects_df.to_dict(orient='records')
+    projects_json = json.dumps(projects_df, indent=2)
 
-    end_task = time.time()
-    print("########")
-    print("DATA SOURCE INFOMATION COLLECTED ({} seconds)".format(end_task - start_task))
-
-    #Pagination
-    # determining results displayed on current page
-    
-    current_page = 1
-    number_pages = int(math.ceil(len(result_df.index)/10.0))
-    if current_page < 7 or number_pages < 10:
-        if number_pages < 10:
-            displayed_page_numbers = list(range(1, number_pages + 1))
-        else:
-            displayed_page_numbers  = list(range(1, 11))
-    else:
-        if number_pages < (page + 4):
-            displayed_page_numbers  = list(range(current_page-5, number_pages + 1))
-        else:
-            displayed_page_numbers  = list(range(current_page-5, current_page + 5))
-
-    # EDIT BELOW
-    current_page_results = result_df.iloc[(current_page*10-10):(current_page*10)]
-    print("Pagination", displayed_page_numbers, current_page, number_pages)
-    
     end_total = time.time()
+
     print("##########")
     print("TOTAL SEARCH TIME ELAPSED {}".format(end_total - start_total))
     print("####################")
-    print("RENDERING RESULTS {}-{}".format(current_page*10-10, current_page*10))
-    print("########################################")
-    # [0 filename, 1 total region, 2 overlap, 3 short name, 4 long name, 5 description, 6 short description, 7 ID]
-    result_df.reset_index(inplace=True)
-    print(result_df.columns)
 
-    result_df = result_df.fillna("").sort_values("combo_score", ascending=False)# FIX ME SHOULD this be asc
-    results = result_df[["NAME", "file_size", "overlaps", "SHORTNAME", "LONGNAME", "LONGINFO", "SHORTINFO", "index", "combo_score"]].to_numpy()
-
-    return render_template('file_result.html',
-                            form = fileform,
-                            results = results.tolist(),
+    return render_template('result.html',
+                            results = results_json,
+                            projects = projects_json,
                             searchtime = end_total - start_total,
                             file_name = file_name,
-                            ref_genome = ref_genome,
-                            numresults = len(result_df.index),
-                            source = ref_genome,
-                            page = 1,
-                            pageNums = displayed_page_numbers)
+                            ref_genome = ref_genome
+                            )
 
 @app.route("/search/<string:ref_genome>/<string:chrom>:<int:lower>-<int:upper>", methods=['GET', 'POST'])
 def intervalResult(ref_genome, chrom, lower, upper):
-    form = Search()
-    intervalform = intervalForm()
-    fileform = fileForm(CombinedMultiDict((request.files, request.form)))
-    
-    current_interval = [str(chrom) + ":" + str(lower) + "-" + str(upper), ref_genome]
-    if session.get('intervals', None) == None:
-        session["intervals"] = [[chrom, lower, upper, ref_genome] ]
+        print("INITIATING SEARCH")
+        start_total = time.time()
+        start_task = time.time()
         
-    print("Result recieved:", session.get('intervals', None))
-    print("#")
+        result_df = utility.interval_search(ref_genome, chrom, lower, upper)
+        if isinstance(result_df, str): # parsing error occured
+            return home(result_df)
 
-    if form.validate_on_submit():
-        out = utility.parse_interval_input(form.Input.data)
-        if isinstance(out, str): # parsing error occured
-            return home(error = out)
-        else:
-            session['intervals'] = [[int(i[0].split(":")[0]), int(i[0].split(":")[1].split("-")[0]), int(i[0].split(":")[1].split("-")[1]), i[1]] for i in out]
-            return redirect("/result/{}/{}".format(out[0][1], out[0][0]))
+        end_task = time.time()
+        print("#####")
+        print("SEARCH COMPLETED ({} seconds)".format(end_task - start_task))
 
-    print("INITIATING SEARCH")
-    start_total = time.time()
-    start_task = time.time()
+        result_df.reset_index(inplace=True)
+        result_df = result_df.fillna("").sort_values("overlaps", ascending=False)
+        result_df = result_df.to_dict(orient='records')
+        results_json = json.dumps(result_df, indent=2)
 
-    out = utility.interval_search(ref_genome, chrom, lower, upper)
+        projects_df = utility.retrieve_projects(ref_genome)
+        if isinstance(projects_df, str): # parsing error occured
+            return home(projects_df)
 
-    if isinstance(out, str): # parsing error occured
-        return render_template('home.html', fileform = fileform, intervalform = intervalform, error = out)
-    else:
-        result_df = out
+        projects_df = projects_df.to_dict(orient='records')
+        projects_json = json.dumps(projects_df, indent=2)
 
-    end_task = time.time()
-    print("#####")
-    print("SEARCH COMPLETED ({} seconds)".format(end_task - start_task))
+        end_total = time.time()
 
-    # make array of links for pages
-    start_task = time.time()
+        print("##########")
+        print("TOTAL SEARCH TIME ELAPSED {}".format(end_total - start_total))
+        print("####################")
 
-    # out = utility.retrieve_metadata(ref_genome) #generic function to handle data information gathering
-    # if isinstance(out, str): # parsing error occured
-    #     return render_template('home.html', fileform = fileform, intervalform = intervalform, error = out)
-    # else:
-    #     metadata_df = out
-
-    # result_df = pd.merge(result_df,
-    #                      metadata_df,
-    #                      left_on ="name",
-    #                      right_on ="NAME",
-    #                      how ="left")
-    print(result_df)
-    result_df.sort_values("overlaps", ascending=False, inplace=True)
-
-    end_task = time.time()
-    print("########")
-    print("DATA SOURCE INFOMATION COLLECTED ({} seconds)".format(end_task - start_task))
-
-    #Pagination
-    # determining results displayed on current page
-    
-    current_page = 1
-    number_pages = int(math.ceil(len(result_df.index)/10.0))
-    if current_page < 7 or number_pages < 10:
-        if number_pages < 10:
-            displayed_page_numbers = list(range(1, number_pages + 1))
-        else:
-            displayed_page_numbers  = list(range(1, 11))
-    else:
-        if number_pages < (page + 4):
-            displayed_page_numbers  = list(range(current_page-5, number_pages + 1))
-        else:
-            displayed_page_numbers  = list(range(current_page-5, current_page + 5))
-
-    # EDIT BELOW
-    current_page_results = result_df.iloc[(current_page*10-10):(current_page*10)]
-    print("Pagination", displayed_page_numbers, current_page, number_pages)
-    
-    end_total = time.time()
-    print("##########")
-    print("TOTAL SEARCH TIME ELAPSED {}".format(end_total - start_total))
-    print("####################")
-    print("RENDERING RESULTS {}-{}".format(current_page*10-10, current_page*10))
-    print("########################################")
-    # [0 filename, 1 total region, 2 overlap, 3 short name, 4 long name, 5 description, 6 short description, 7 ID]
-    result_df.reset_index(inplace=True)
-    print(result_df.columns)
-    result_df = result_df.fillna("")
-    results = result_df[["FILEID", "size", "overlaps", "SHORTNAME", "LONGNAME", "LONGINFO", "SHORTINFO", "index"]].to_numpy()
-
-    print(session.get('intervals', None))
-    return render_template('interval_result.html',
-                            current_interval = current_interval,
-                            current_interval_split = [chrom, lower, upper, ref_genome],
-                            form = form,
-                            results = results.tolist(),
-                            searchtime = end_total - start_total,
-                            sessionIntervals = session['intervals'],
-                            numresults = len(result_df.index),
-                            source = ref_genome,
-                            page = 1,
-                            pageNums = displayed_page_numbers)
-    # except:
-    #     return render_template('home.html', form = form, inputtype="manual", error="Unexpected error found, try again.")
-
-    # except:
-    #     return render_template('404.html', utterNoneSense = "Unexpected error found, try again.")
+        return render_template('result.html',
+                                results = results_json,
+                                projects = projects_json,
+                                searchtime = end_total - start_total,
+                                chrom = chrom,
+                                lower_bound = lower,
+                                upper_bound = upper,
+                                ref_genome = ref_genome
+                                )
 
 @app.route("/<path:utter_none_sense>", methods=['GET', 'POST'])
 @app.route("/error", methods=['GET', 'POST'])

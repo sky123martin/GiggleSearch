@@ -14,6 +14,28 @@ import math
 import re
 import requests 
 
+def retrieve_projects(genome):
+    try:
+        out_file_name = "outputs/{}.csv".format(str(random.randint(0,sys.maxsize)))
+        cmd = "(cd {};  python3 query_indices.py -p {} {})".format(app.config["SERVER_PATH"], genome, out_file_name)
+        proc = subprocess.check_output(cmd,
+                                     stderr=None,
+                                     shell=True,
+                                     timeout=app.config["TIMEOUT"])
+
+        result_df = pd.read_csv(app.config["SERVER_PATH"] + "/" + out_file_name, index_col = False)
+
+        cmd = "(cd {} ; rm {})".format(app.config["SERVER_PATH"], out_file_name)
+        proc = subprocess.check_output(cmd,
+                                    stderr=None,
+                                    shell=True,
+                                    timeout=app.config["TIMEOUT"])
+
+        return result_df
+    
+    except Exception as e:
+        return str(e)
+
 def retrieve_genomes():
     try:
         result_df = pd.read_csv("{}/outputs/genomes.csv".format(app.config["SERVER_PATH"]), index_col = False)
