@@ -32,7 +32,8 @@ def parse_interval_input(search, ref_genome):
 #     Input = "1:100-2000 2:100-2000 3:100-2000 1:1030-2000 in rn6"
 #     Out = [[u'1:100-2000', u'rn6'], [u'2:100-2000', u'rn6'], [u'3:100-2000', u'rn6'], [u'1:1030-2000', u'rn6']])
     currentChromosome = ""
-    intervals = search.replace(",", "").replace("c", "").replace("h", "").replace("r", "").replace("o", "").replace("m", "").split()[:-2]
+    intervals = search.replace(",", "").replace("c", "").replace("h", "").replace("r", "").replace("o", "").replace("m", "").split()
+    print(intervals)
     cleaned_intervals = []
     
     for interval in intervals:
@@ -100,7 +101,8 @@ def interval_search(ref_genome, chrom, lower, upper):
 
 def file_search(process_id, ref_genome, file_name):
     try:
-        out_file_name = "outputs/" + str(random.randint(0,sys.maxsize)) + '.csv'
+        print(process_id)
+        out_file_name = "outputs/" + str(process_id) + '.csv'
         cmd = "(cd {};  python3 query_indices.py --qf uploads/{}.{} {} {} True)".format(app.config["SERVER_PATH"], process_id, file_name.split(".", 1)[-1], ref_genome, out_file_name)
         proc = subprocess.check_output(cmd,
                                      stderr=None,
@@ -108,17 +110,18 @@ def file_search(process_id, ref_genome, file_name):
                                      timeout=app.config["TIMEOUT"])
         result_df = pd.read_csv(app.config["SERVER_PATH"] + "/" + out_file_name, index_col = False)
 
+        
         cmd = "(cd {} ; rm {})".format(app.config["SERVER_PATH"], out_file_name)
         proc = subprocess.check_output(cmd,
                                     stderr=None,
                                     shell=True,
                                     timeout=app.config["TIMEOUT"])
 
-        cmd = "(cd {} ; rm uploads/{}.{})".format(app.config["SERVER_PATH"], process_id, file_name.split(".", 1)[-1])
-        proc = subprocess.check_output(cmd,
-                                    stderr=None,
-                                    shell=True,
-                                    timeout=app.config["TIMEOUT"])
+        # cmd = "(cd {} ; rm uploads/{}.{})".format(app.config["SERVER_PATH"], process_id, file_name.split(".", 1)[-1])
+        # proc = subprocess.check_output(cmd,
+        #                             stderr=None,
+        #                             shell=True,
+        #                             timeout=app.config["TIMEOUT"])
         
         result_df["name"] = result_df["FILEID"]
 

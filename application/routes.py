@@ -24,8 +24,7 @@ def home(error = ""):
     intervalform = intervalForm()
     fileform = fileForm(CombinedMultiDict((request.files, request.form)))
     genomes = utility.retrieve_genomes()
-    genomes = genomes["GENOME"].unique()
-
+    genomes = list(genomes["GENOME"].unique())
     # interval search
     if request.method == 'POST' and intervalform.validate_on_submit() and error == "":
         print("Recieved Input:", intervalform.interval.data, intervalform.refGenome.data)
@@ -40,7 +39,7 @@ def home(error = ""):
             return redirect("/search/{}/{}".format(intervalform.refGenome.data,out[0][0]))   
 
     # file search
-    elif request.method == 'POST' and error == "": # and 
+    elif request.method == 'POST' and error == "" and fileform.file.data is not None: # and 
         filename = secure_filename(fileform.file.data.filename)
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -57,7 +56,7 @@ def home(error = ""):
         if ref_genome == "":
             return home("No reference genome")
 
-        if file.filename.split(".",1)[-1] not in app.config["ACCEPTED_FILE_FORMATS"]:
+        if "."+file.filename.split(".",1)[-1] not in app.config["ACCEPTED_FILE_FORMATS"]:
             return home("File {} is not an acceptable file format, accepted types:{}".format(file.filename, app.config["ACCEPTED_FILE_FORMATS"]))
 
         print("Recieved Input:",ref_genome, file.filename)
@@ -67,7 +66,7 @@ def home(error = ""):
             file.save(app.config["SERVER_PATH"] +  "/uploads/" + str(process_id) + "." + file_name.split(".", 1)[-1])
             return redirect("/search/{}/{}/{}".format(process_id, ref_genome, file_name))   
 
-    return render_template('home.html', fileform = fileform, intervalform = intervalform, genomes = genomes, error = error)
+    return render_template('home.html', fileform = fileform, intervalform = intervalform, file_types = list(app.config["ACCEPTED_FILE_FORMATS"]), genomes = genomes, error = error)
 
 @app.route("/search/<string:process_id>/<string:ref_genome>/<string:file_name>", methods=['GET', 'POST'])
 def fileResult(process_id, ref_genome, file_name):
@@ -116,18 +115,18 @@ def fileResult(process_id, ref_genome, file_name):
     # make array of links for pages
     start_task = time.time()
 
-    out = utility.retrieve_metadata(ref_genome) #generic function to handle data information gathering
-    if isinstance(out, str): # parsing error occured
-        return home(out)
-    else:
-        metadata_df = out
+    # out = utility.retrieve_metadata(ref_genome) #generic function to handle data information gathering
+    # if isinstance(out, str): # parsing error occured
+    #     return home(out)
+    # else:
+    #     metadata_df = out
 
-    result_df = pd.merge(result_df,
-                         metadata_df,
-                         left_on ="name",
-                         right_on ="NAME",
-                         how ="left")
-    print(result_df)
+    # result_df = pd.merge(result_df,
+    #                      metadata_df,
+    #                      left_on ="name",
+    #                      right_on ="NAME",
+    #                      how ="left")
+    # print(result_df)
     result_df.sort_values("overlaps", inplace=True)
 
     end_task = time.time()
@@ -163,10 +162,9 @@ def fileResult(process_id, ref_genome, file_name):
     # [0 filename, 1 total region, 2 overlap, 3 short name, 4 long name, 5 description, 6 short description, 7 ID]
     result_df.reset_index(inplace=True)
     print(result_df.columns)
-
+    
     result_df = result_df.fillna("").sort_values("combo_score", ascending=False)# FIX ME SHOULD this be asc
-    results = result_df[["NAME", "file_size", "overlaps", "SHORTNAME", "LONGNAME", "LONGINFO", "SHORTINFO", "index", "combo_score"]].to_numpy()
-
+    results = result_df[["FILEID", "SIZE", "overlaps", "SHORTNAME", "LONGNAME", "LONGINFO", "SHORTINFO", "index", "combo_score"]].to_numpy()
     return render_template('file_result.html',
                             form = fileform,
                             results = results.tolist(),

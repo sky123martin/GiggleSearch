@@ -46,15 +46,17 @@
             </div>
             <input id = "refGenomeF" name="reference genome" name = "interval" style="display:none;">
           </div>
-          {{ fileform.file }}
+          <input type="file" name="file" id="file" onchange="validate_file(this.value)" /> 
+          <!-- {{ fileform.file }} -->
         </div>
+        <p id="file_validation" style="color:red;">{{error}}</p>
       </div>
     </div>
 
     <div class="form-group row justify-content-md-center">
         <div class="col-md-auto">
             <div class="btn-group" id = "fileform">
-              <button type="submit" onclick="fileloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
+              <button type="submit" id= "file_search" onclick="fileloading();" class="btn btn-md btn-danger mb-2" disabled>Giggle Search</button>
                 {{ fileform.csrf_token }}    
               </div>
         </div>
@@ -77,21 +79,17 @@
                   <div class="dropdown-menu" id="dropdownI"></div>
                   <input id = "refGenomeI" name="refGenome" name = "interval" style="display:none;">
                 </div>
-                  {% if error != "" %}
-                  <input id="interval" name = "interval" style="text-align:left;" class="form-control form-control-md form-control-borderless" type="intervals" placeholder="chr<#>: <lower> - <upper> , (additional intervals...)" required>
-                  <div class="invalid-feedback">{{error}} (review 'about' tab for formatting rules)</div>
-                  {% else %} 
-                  <input id="interval" name = "interval" style="text-align:left;" class="form-control form-control-md form-control-borderless" type="intervals"  placeholder="chr<#>: <lower> - <upper> , (additional intervals...)">
-                  {% endif %}
+                  <input id="interval" name = "interval" onchange="validate_interval(this.value);" style="text-align:left;" class="form-control" type="text"  placeholder="chr<#>: <lower> - <upper> , (additional intervals...)">
+                  </div>
+                  <p id="interval_validation" style="color:red;">{{error}}</p>
+                </div>
               </div>
-            </div>
-          </div>
         
 
           <div class="form-group row justify-content-md-center">
             <div class="col-md-auto">
                 <div class="btn-group">
-                    <button type="submit" onclick="intervalloading();" class="btn btn-md btn-danger mb-2">Search Overlapping intervals</button>
+                    <button id = "interval_search" type="submit" onclick="intervalloading();" class="btn btn-md btn-danger mb-2" disabled>Giggle Search</button>
                   </div>
               {{ intervalform.csrf_token }}
             </div>
@@ -209,7 +207,6 @@
 <script> 
   var genomes = {{genomes| safe }};
   genomes = genomes.sort();
-    
   d3.select("#dropdownF")
     .selectAll('myOptions')
     .data(genomes)
@@ -219,8 +216,9 @@
       .text(function (d) { return d; }) // text showed in the menu
       .attr("value", function (d) { return d; }) // corresponding value returned by the button
       .on("click", function(d) {
-        document.getElementById("refGenomeViewF").innerHTML = d
-        document.getElementById("refGenomeF").value = d
+        document.getElementById("refGenomeViewF").innerHTML = d;
+        document.getElementById("refGenomeF").value = d;
+        validate_file(document.getElementById("file").value);
       });
 
   d3.select("#dropdownI")
@@ -234,8 +232,73 @@
       .on("click", function(d) {
         document.getElementById("refGenomeViewI").innerHTML = d
         document.getElementById("refGenomeI").value = d
+        validate_interval(document.getElementById("interval").value);
       });
 
+  function isNumeric(str) { // https://stackoverflow.com/questions/175739/built-in-way-in-javascript-to-check-if-a-string-is-a-valid-number
+    if (typeof str != "string") return false // we only process strings!  
+    return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+          !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
+  }
+  function validate_file(filename){
+    var accepted_file_types = {{file_types| safe }};
+    var file_type = "." + filename.substring(filename.indexOf('.')+1).toString().replace(" ","")
+    if(!(filename=="")){
+    if(!accepted_file_types.includes(file_type)){
+      document.getElementById("file_validation").innerHTML = "Not accepted file format: ."+file_type+ " , accepted file formats: "+accepted_file_types;
+      return
+    }else if(document.getElementById("refGenomeViewF").innerHTML != "Ref Genome" ){
+      document.getElementById("file_search").disabled = false;
+    }}
+    document.getElementById("interval_validation").innerHTML ="";
+  }
+  function validate_interval(input){
+    input = input.toString().replace("chrom","").replace("chr","")
+    if (input==""){
+      document.getElementById("interval_search").disabled = true;
+      document.getElementById("interval_validation").innerHTML ="";
+      return
+    }
+    var intervals = input.split(" ");
+    var cleaned_intervals = [];
+    var chrom, lower, upper, bounds;
+    for (let i = 0; i < intervals.length; i++) {
+      console.log(intervals[i])
+      if(!intervals[i].includes(":") || !intervals[i].includes("-")){
+        document.getElementById("interval_search").disabled = true;
+        document.getElementById("interval_validation").innerHTML = "interval is missing : or - '" + intervals[i] +"'"
+        return
+      }
+
+      chrom = intervals[i].split(":")[0]
+      bounds = intervals[i].split(":")[1]
+      lower = bounds.split("-")[0]
+      upper = bounds.split("-")[1]
+      console.log(chrom)
+      console.log(lower)
+      console.log(lower)
+      if(!isNumeric(lower)){
+        document.getElementById("interval_search").disabled = true;
+        document.getElementById("interval_validation").innerHTML = "non-numeric lower bound on interval: '" + intervals[i] +"'"
+        return
+      }else if(!isNumeric(upper)){
+        document.getElementById("interval_search").disabled = true;
+        document.getElementById("interval_validation").innerHTML = "non-numeric upper bound on interval: '" + intervals[i] +"'"
+        return
+      }else if(parseInt(upper) < parseInt(lower)){
+        document.getElementById("interval_search").disabled = true;
+        document.getElementById("interval_validation").innerHTML = "interval has lower bound greater than upper bound: '" + intervals[i] +"'"
+        return
+      }  
+      cleaned_intervals.push(intervals[i]);
+    }
+    document.getElementById("interval_validation").innerHTML = ""
+
+    if(document.getElementById("refGenomeViewI").innerHTML != "Ref Genome" ){
+      document.getElementById("interval_search").disabled = false;
+    }
+
+  }
   function intervalloading(){
     // <H1 style = font-size:75px align="center" id="gigglelogo"> <img src="../static/gigglelogo.png" width = "175px" style = "padding-bottom: 0px;" alt="Gi"> <font color="#a4a5a6" style = "font-family:Times New Roman; " >ggle</font></H1>
         document.getElementById("gigglelogo").innerHTML = "<img src=\"../static/gigglelogo.gif\" width = \"175px\" style = \"padding-bottom: 0px;\" alt=\"Gi\"> <font color=\"#a4a5a6\" style = \"font-family:Times New Roman; \" >ggle</font>";

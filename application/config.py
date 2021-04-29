@@ -12,7 +12,7 @@ class Config(object):
     # Path to Giggle Index
     SERVER_PATH = "../GiggleIndexServer"
 
-    TIMEOUT = 100
+    TIMEOUT = 1000
 
     # restrictions for interval input
     MAX_INTERVALS = 20
